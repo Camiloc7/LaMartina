@@ -1,0 +1,110 @@
+config:
+  target: "http://localhost:3001"
+  phases:
+    # Fase de calentamiento (30s — carga baja)
+    - duration: 30
+      arrivalRate: 5
+      name: "Calentamiento"
+    # Fase de carga normal (60s — carga media)
+    - duration: 60
+      arrivalRate: 20
+      name: "Carga normal"
+    # Fase de estrés (30s — pico de carga)
+    - duration: 30
+      arrivalRate: 50
+      name: "Pico de carga"
+  defaults:
+    headers:
+      Content-Type: "application/json"
+  plugins:
+    expect: {}
+
+scenarios:
+  # ─── Escenario 1: Flujo de Jornada ─────────────────────────────────────────
+  # Simula múltiples jardineros iniciando jornada simultáneamente
+  - name: "Reporte de inicio de jornada (operarios concurrentes)"
+    weight: 40
+    flow:
+      # Login del operario
+      - post:
+          url: "/api/v1/auth/login"
+          json:
+            email: "operario@test.lamartina.co"
+            password: "Test1234!"
+          capture:
+            - json: "$.data.accessToken"
+              as: "token"
+          expect:
+            - statusCode: 200
+      # Iniciar jornada
+      - post:
+          url: "/api/v1/jornadas"
+          headers:
+            Authorization: "Bearer {{ token }}"
+          json:
+            conjuntoId: "conjunto-test-uuid"
+            ubicacion:
+              lat: 4.711
+              lng: -74.072
+          expect:
+            - statusCode: 201
+
+  # ─── Escenario 2: Radicación masiva de PQR ──────────────────────────────────
+  # Simula afluencia masiva de PQR desde el portal de clientes
+  - name: "Radicación de PQR (clientes concurrentes)"
+    weight: 35
+    flow:
+      - post:
+          url: "/api/v1/auth/login"
+          json:
+            email: "cliente@test.lamartina.co"
+            password: "Test1234!"
+          capture:
+            - json: "$.data.accessToken"
+              as: "token"
+          expect:
+            - statusCode: 200
+      - post:
+          url: "/api/v1/pqr"
+          headers:
+            Authorization: "Bearer {{ token }}"
+          json:
+            tipo: "QUEJA"
+            titulo: "Prueba de carga Artillery"
+            descripcion: "Esta es una PQR de prueba generada automáticamente durante las pruebas de carga del sistema."
+            conjuntoId: "conjunto-test-uuid"
+            prioridad: "MEDIA"
+          expect:
+            - statusCode: 201
+
+  # ─── Escenario 3: Consultas de Admin ─────────────────────────────────────────
+  # Simula administradores consultando el panel
+  - name: "Consulta de PQR (panel admin)"
+    weight: 25
+    flow:
+      - post:
+          url: "/api/v1/auth/login"
+          json:
+            email: "admin@test.lamartina.co"
+            password: "Test1234!"
+          capture:
+            - json: "$.data.accessToken"
+              as: "token"
+          expect:
+            - statusCode: 200
+      - get:
+          url: "/api/v1/pqr"
+          headers:
+            Authorization: "Bearer {{ token }}"
+          expect:
+            - statusCode: 200
+      - get:
+          url: "/api/v1/jornadas/mis-jornadas"
+          headers:
+            Authorization: "Bearer {{ token }}"
+          expect:
+            - statusCode: 200
+      - get:
+          url: "/health"
+          expect:
+            - statusCode: 200

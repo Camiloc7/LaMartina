@@ -1,0 +1,81 @@
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Outfit:wght@400;500;600;700;800&display=swap');
+
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  :root {
+    --background: 15 23 42;
+    --foreground: 248 250 252;
+    --brand: 249 115 22;
+  }
+
+  * {
+    @apply border-surface-border;
+    box-sizing: border-box;
+  }
+
+  body {
+    @apply bg-surface text-slate-100;
+    font-feature-settings: "rlig" 1, "calt" 1;
+  }
+
+  h1, h2, h3, h4, h5, h6 {
+    @apply font-display;
+  }
+
+  ::selection {
+    @apply bg-brand-500/30 text-brand-100;
+  }
+
+  ::-webkit-scrollbar {
+    width: 6px;
+  }
+  ::-webkit-scrollbar-track {
+    @apply bg-surface;
+  }
+  ::-webkit-scrollbar-thumb {
+    @apply bg-surface-muted rounded-full;
+  }
+  ::-webkit-scrollbar-thumb:hover {
+    @apply bg-brand-500;
+  }
+}
+
+@layer components {
+  /* Glassmorphism card */
+  .glass-card {
+    @apply bg-surface-card/80 backdrop-blur-sm border border-surface-border rounded-2xl;
+  }
+
+  /* Botón primario con gradiente brand */
+  .btn-brand {
+    @apply inline-flex items-center gap-2 px-6 py-3 rounded-xl font-semibold text-white
+           bg-gradient-brand hover:opacity-90 active:scale-95
+           transition-all duration-200 shadow-lg shadow-brand-500/30
+           hover:shadow-brand-500/50 hover:-translate-y-0.5;
+  }
+
+  /* Input estilizado */
+  .input-dark {
+    @apply w-full px-4 py-3 rounded-xl bg-surface-card border border-surface-border
+           text-slate-100 placeholder:text-slate-500
+           focus:outline-none focus:ring-2 focus:ring-brand-500/50 focus:border-brand-500
+           transition-all duration-200;
+  }
+
+  /* Badge de estado */
+  .badge {
+    @apply inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium;
+  }
+  .badge-orange { @apply badge bg-brand-500/20 text-brand-400; }
+  .badge-green  { @apply badge bg-green-500/20 text-green-400; }
+  .badge-red    { @apply badge bg-red-500/20 text-red-400; }
+  .badge-blue   { @apply badge bg-blue-500/20 text-blue-400; }
+
+  /* Gradient text */
+  .text-gradient {
+    @apply bg-clip-text text-transparent bg-gradient-brand;
+  }
+}
