@@ -2,15 +2,17 @@
 
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
-import { LayoutDashboard, MessageSquareWarning, CalendarClock, Users, LogOut, Menu, X } from 'lucide-react';
+import { LayoutDashboard, MessageSquareWarning, CalendarClock, Users, LogOut, Menu, X, Building2, CalendarDays } from 'lucide-react';
 import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 
 const sidebarLinks = [
   { name: 'Dashboard', href: '/admin/dashboard', icon: LayoutDashboard },
+  { name: 'Programación', href: '/admin/programacion', icon: CalendarDays },
   { name: 'PQRs', href: '/admin/pqr', icon: MessageSquareWarning },
   { name: 'Jornadas', href: '/admin/jornadas', icon: CalendarClock },
   { name: 'Usuarios', href: '/admin/usuarios', icon: Users },
+  { name: 'Conjuntos', href: '/admin/conjuntos', icon: Building2 },
 ];
 
 export default function AdminLayout({

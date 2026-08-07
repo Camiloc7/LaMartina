@@ -27,7 +27,12 @@ export default function LoginPage() {
       if (response.success && response.data?.accessToken) {
         localStorage.setItem('accessToken', response.data.accessToken);
         localStorage.setItem('user', JSON.stringify(response.data.user));
-        router.push('/admin/pqr');
+        
+        if (response.data.user.rol === 'OPERARIO') {
+          router.push('/operario/jornadas');
+        } else {
+          router.push('/admin/pqr');
+        }
       }
     } catch (err: any) {
       setError(err.message || 'Credenciales inválidas');

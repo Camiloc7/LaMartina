@@ -35,10 +35,49 @@ export async function iniciarJornada(
     ubicacionInicio: ubicacion,
   });
 
+  if (req.body.jornadaId) {
+    const programada = await jornadaRepo.findOne({ where: { id: req.body.jornadaId } });
+    if (programada && programada.estado === 'PROGRAMADA') {
+      programada.estado = 'EN_PROGRESO';
+      programada.fechaInicio = new Date();
+      programada.ubicacionInicio = ubicacion;
+      await jornadaRepo.save(programada);
+      res.status(200).json({ success: true, message: 'Jornada programada iniciada.', data: programada });
+      return;
+    }
+  }
+
   await jornadaRepo.save(jornada);
   res.status(201).json({
     success: true,
     message: 'Jornada iniciada.',
+    data: jornada,
+  });
+}
+
+export async function programarJornada(
+  req: Request,
+  res: Response
+): Promise<void> {
+  const { operarioId, conjuntoId, fechaInicio, observaciones } = req.body as {
+    operarioId: string;
+    conjuntoId: string;
+    fechaInicio: string;
+    observaciones?: string;
+  };
+
+  const jornada = jornadaRepo.create({
+    operarioId,
+    conjuntoId,
+    fechaInicio: new Date(fechaInicio),
+    estado: 'PROGRAMADA',
+    observaciones,
+  });
+
+  await jornadaRepo.save(jornada);
+  res.status(201).json({
+    success: true,
+    message: 'Servicio programado exitosamente.',
     data: jornada,
   });
 }
@@ -124,4 +163,12 @@ export async function getById(req: Request, res: Response): Promise<void> {
   });
   if (!jornada) throw new ApiError('Jornada no encontrada', 404);
   res.json({ success: true, data: jornada });
+}
+
+export async function getAll(_req: Request, res: Response): Promise<void> {
+  const jornadas = await jornadaRepo.find({
+    relations: ['operario', 'conjunto'],
+    order: { createdAt: 'DESC' },
+  });
+  res.json({ success: true, data: jornadas });
 }

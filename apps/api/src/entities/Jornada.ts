@@ -10,7 +10,7 @@ import {
 import { User } from './User';
 import { Conjunto } from './Conjunto';
 
-export type JornadaEstado = 'EN_PROGRESO' | 'COMPLETADA' | 'CANCELADA';
+export type JornadaEstado = 'PROGRAMADA' | 'EN_PROGRESO' | 'COMPLETADA' | 'CANCELADA';
 
 @Entity('jornadas')
 export class Jornada {
@@ -39,7 +39,7 @@ export class Jornada {
 
   @Column({
     type: 'enum',
-    enum: ['EN_PROGRESO', 'COMPLETADA', 'CANCELADA'],
+    enum: ['PROGRAMADA', 'EN_PROGRESO', 'COMPLETADA', 'CANCELADA'],
     default: 'EN_PROGRESO',
   })
   estado!: JornadaEstado;

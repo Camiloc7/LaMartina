@@ -7,7 +7,9 @@ import { AuthRequest } from '../../middleware/authenticate';
 const pqrRepo = AppDataSource.getRepository(PQR);
 
 export async function crearPQR(req: Request, res: Response): Promise<void> {
-  const clienteId = (req as AuthRequest).userId;
+  let clienteId = (req as AuthRequest).userId;
+  const userRol = (req as AuthRequest).userRol;
+  
   const { tipo, titulo, descripcion, conjuntoId, prioridad } = req.body as {
     tipo: PQR['tipo'];
     titulo: string;
@@ -15,6 +17,11 @@ export async function crearPQR(req: Request, res: Response): Promise<void> {
     conjuntoId: string;
     prioridad?: PQR['prioridad'];
   };
+
+  // Si es ADMIN y envía un clienteId explícito, lo usamos
+  if (req.body.clienteId && ['ADMIN', 'SUPER_ADMIN'].includes(userRol)) {
+    clienteId = req.body.clienteId;
+  }
 
   const pqr = pqrRepo.create({
     tipo,
