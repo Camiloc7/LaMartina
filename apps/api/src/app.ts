@@ -5,6 +5,7 @@ import cors from 'cors';
 import helmet from 'helmet';
 import morgan from 'morgan';
 import dotenv from 'dotenv';
+import path from 'path';
 
 import { AppDataSource } from './config/database';
 import { errorHandler } from './middleware/errorHandler';
@@ -16,7 +17,7 @@ import { jornadasRouter } from './modules/jornadas/jornadas.router';
 import { pqrRouter } from './modules/pqr/pqr.router';
 import { conjuntosRouter } from './modules/conjuntos/conjuntos.router';
 
-dotenv.config();
+dotenv.config({ path: path.resolve(process.cwd(), '../../.env') });
 
 const app: Express = express();
 const PORT = process.env['API_PORT'] ?? 3001;

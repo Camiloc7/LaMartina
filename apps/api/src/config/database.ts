@@ -1,12 +1,13 @@
 import { DataSource } from 'typeorm';
 import dotenv from 'dotenv';
+import path from 'path';
 
 import { User } from '../entities/User';
 import { Conjunto } from '../entities/Conjunto';
 import { Jornada } from '../entities/Jornada';
 import { PQR } from '../entities/PQR';
 
-dotenv.config();
+dotenv.config({ path: path.resolve(process.cwd(), '../../.env') });
 
 export const AppDataSource = new DataSource({
   type: 'postgres',
