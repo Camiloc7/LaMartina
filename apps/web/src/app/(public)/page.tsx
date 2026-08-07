@@ -11,39 +11,11 @@ export const metadata: Metadata = {
 
 export default function LandingPage() {
   return (
-    <div className="min-h-screen bg-white text-slate-900 font-sans">
-      
-      {/* 1. Cabecera */}
-      <header className="fixed top-0 w-full z-50 bg-white/95 backdrop-blur-md shadow-sm transition-all duration-300">
-        <div className="max-w-7xl mx-auto px-6 h-20 flex items-center justify-between">
-          <div className="flex items-center gap-3">
-            <Image src="/logo.jpeg" alt="La Martina Logo" width={50} height={50} className="rounded-md object-cover" />
-            <span className="font-bold text-2xl text-slate-800 tracking-tight">La Martina</span>
-          </div>
-          
-          <nav className="hidden md:flex items-center gap-8 font-medium text-slate-600">
-            <Link href="#inicio" className="hover:text-brand-500 transition-colors">Inicio</Link>
-            <Link href="#servicios" className="hover:text-brand-500 transition-colors">Servicios</Link>
-            <Link href="#galeria" className="hover:text-brand-500 transition-colors">Galería</Link>
-            <Link href="#contacto" className="hover:text-brand-500 transition-colors">Contacto</Link>
-          </nav>
-          
-          <div className="hidden md:block w-[140px]"></div>
-        </div>
-      </header>
-
-      {/* 2. Hero Banner (Con Video de Fondo) */}
+    <>
+      {/* 2. Hero Banner */}
       <section id="inicio" className="relative pt-20 h-screen min-h-[600px] flex items-center justify-center overflow-hidden">
         <div className="absolute inset-0 z-0">
-          <video 
-            autoPlay 
-            loop 
-            muted 
-            playsInline 
-            className="object-cover w-full h-full scale-105"
-          >
-            <source src="/video.mp4" type="video/mp4" />
-          </video>
+          <Image src="/paisajismo-1.jpeg" alt="Paisajismo Hero" fill className="object-cover" priority />
           <div className="absolute inset-0 bg-slate-900/50" />
           <div className="absolute inset-0 bg-gradient-to-t from-slate-900 via-transparent to-transparent" />
         </div>
@@ -181,74 +153,13 @@ export default function LandingPage() {
             <Image src="/equipo_de_trabajo (2).jpeg" alt="Galería" fill className="object-cover transition-transform duration-700 group-hover:scale-110" />
             <div className="absolute inset-0 bg-slate-900/40 group-hover:bg-transparent transition-colors duration-500" />
           </div>
-          <div className="aspect-square relative overflow-hidden group bg-white p-8 flex items-center justify-center">
-            <Image src="/logo.jpeg" alt="Sello de Calidad" width={150} height={150} className="object-contain transition-transform duration-700 group-hover:scale-110" />
+          <div className="aspect-square relative overflow-hidden group">
+            <Image src="/trabajos (3).jpeg" alt="Galería de Trabajo" fill className="object-cover transition-transform duration-700 group-hover:scale-110" />
+            <div className="absolute inset-0 bg-slate-900/40 group-hover:bg-transparent transition-colors duration-500" />
           </div>
         </div>
       </section>
 
-      {/* 6. Pie de Página */}
-      <footer id="contacto" className="bg-[#0f172a] text-slate-300 py-20 border-t border-slate-800">
-        <div className="max-w-7xl mx-auto px-6 grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-12">
-          
-          <div>
-            <div className="flex items-center gap-3 mb-6">
-              <Image src="/logo.jpeg" alt="La Martina Logo" width={40} height={40} className="rounded object-cover grayscale brightness-200" />
-              <span className="font-bold text-2xl text-white tracking-tight">La Martina</span>
-            </div>
-            <p className="text-slate-400 text-sm leading-relaxed pr-4">
-              Especialistas en transformar y mantener los espacios verdes de su conjunto residencial con tecnología, transparencia y pasión.
-            </p>
-          </div>
-
-          <div>
-            <h4 className="text-white font-bold text-lg mb-6">Contacto</h4>
-            <ul className="space-y-4 text-sm">
-              <li className="flex items-start gap-3">
-                <MapPin className="text-brand-500 mt-0.5 flex-shrink-0" size={18} />
-                <span>Bogotá, Colombia</span>
-              </li>
-              <li className="flex items-center gap-3">
-                <Phone className="text-brand-500 flex-shrink-0" size={18} />
-                <span>+57 300 000 0000</span>
-              </li>
-              <li className="flex items-center gap-3">
-                <Mail className="text-brand-500 flex-shrink-0" size={18} />
-                <span>contacto@lamartina.com</span>
-              </li>
-            </ul>
-          </div>
-
-          <div>
-            <h4 className="text-white font-bold text-lg mb-6">Enlaces Rápidos</h4>
-            <ul className="space-y-3 text-sm">
-              <li><Link href="#inicio" className="hover:text-brand-400 transition-colors">Volver arriba</Link></li>
-              <li><Link href="#servicios" className="hover:text-brand-400 transition-colors">Nuestros Servicios</Link></li>
-              <li><Link href="#" className="hover:text-brand-400 transition-colors">Políticas de Privacidad</Link></li>
-              <li><Link href="#" className="hover:text-brand-400 transition-colors">Términos y Condiciones</Link></li>
-            </ul>
-          </div>
-
-          <div>
-            <h4 className="text-white font-bold text-lg mb-6">Únete a nuestro equipo</h4>
-            <p className="text-slate-400 text-sm mb-6 leading-relaxed">
-              ¿Eres experto en jardinería, paisajismo o mantenimiento? Buscamos talento con pasión por el detalle.
-            </p>
-            <Link href="/trabaja-con-nosotros" className="inline-flex items-center justify-center w-full md:w-auto bg-brand-500 hover:bg-brand-600 text-white px-6 py-3 rounded-lg font-bold text-sm transition-all shadow-lg shadow-brand-500/20">
-              Trabaja con Nosotros
-            </Link>
-          </div>
-
-        </div>
-        
-        <div className="max-w-7xl mx-auto px-6 mt-16 pt-8 border-t border-slate-800 text-center text-sm text-slate-500 flex flex-col md:flex-row items-center justify-between gap-4">
-          <span>© {new Date().getFullYear()} La Martina. Todos los derechos reservados.</span>
-          <div className="flex flex-wrap justify-center items-center gap-6">
-            <Link href="/login" className="hover:text-slate-300 transition-colors">Portal Administradores</Link>
-            <span>Desarrollado con ❤️ para el cuidado del paisajismo.</span>
-          </div>
-        </div>
-      </footer>
-    </div>
+    </>
   );
 }

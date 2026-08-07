@@ -1,25 +1,13 @@
+'use client';
+
 import Image from 'next/image';
 import Link from 'next/link';
 import { ArrowLeft, Leaf, MapPin, Send, Phone, Briefcase, ShieldCheck } from 'lucide-react';
 
 export default function TrabajaConNosotrosPage() {
   return (
-    <div className="min-h-screen bg-white text-slate-900 font-sans">
+    <>
       
-      {/* Navbar simplificado */}
-      <header className="fixed top-0 w-full z-50 bg-white/95 backdrop-blur-md shadow-sm">
-        <div className="max-w-7xl mx-auto px-6 h-20 flex items-center justify-between">
-          <Link href="/" className="flex items-center gap-2 hover:opacity-80 transition-opacity">
-            <ArrowLeft className="text-slate-400" size={20} />
-            <span className="font-semibold text-slate-600">Volver al inicio</span>
-          </Link>
-          <div className="flex items-center gap-3">
-            <Image src="/logo.jpeg" alt="La Martina Logo" width={40} height={40} className="rounded-md object-cover" />
-            <span className="font-bold text-xl text-slate-800 tracking-tight hidden md:block">La Martina</span>
-          </div>
-        </div>
-      </header>
-
       {/* Hero Section */}
       <section className="relative pt-20 pb-24 lg:pt-32 lg:pb-40 overflow-hidden bg-slate-900">
         <div className="absolute inset-0 z-0 opacity-40">
@@ -142,6 +130,6 @@ export default function TrabajaConNosotrosPage() {
         </div>
       </section>
 
-    </div>
+    </>
   );
 }
