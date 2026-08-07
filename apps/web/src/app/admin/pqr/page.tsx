@@ -1,18 +1,29 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { Search, Filter, MoreVertical, Plus, FileText, CheckCircle2, Clock, AlertCircle } from 'lucide-react';
-
-// Mock data to simulate API response since the frontend is not yet connected to the backend
-const mockPQRs = [
-  { id: 'PQR-20260801-4921', titulo: 'Rama a punto de caer en zona infantil', tipo: 'QUEJA', estado: 'ABIERTA', prioridad: 'URGENTE', fecha: '2026-08-01', conjunto: 'Reserva de los Cerros' },
-  { id: 'PQR-20260802-1052', titulo: 'Solicitud de poda adicional', tipo: 'PETICION', estado: 'EN_PROCESO', prioridad: 'MEDIA', fecha: '2026-08-02', conjunto: 'Torres del Parque' },
-  { id: 'PQR-20260805-3301', titulo: 'Falta de limpieza tras poda', tipo: 'RECLAMO', estado: 'ABIERTA', prioridad: 'ALTA', fecha: '2026-08-05', conjunto: 'Bosque Escondido' },
-  { id: 'PQR-20260728-8822', titulo: 'Mantenimiento preventivo mensual', tipo: 'PETICION', estado: 'RESUELTA', prioridad: 'BAJA', fecha: '2026-07-28', conjunto: 'Prado Verde' },
-];
+import { fetchApi } from '@/lib/api';
 
 export default function PQRPage() {
   const [searchTerm, setSearchTerm] = useState('');
+  const [pqrs, setPqrs] = useState<any[]>([]);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    async function loadData() {
+      try {
+        const response = await fetchApi('/pqr');
+        if (response.success && response.data) {
+          setPqrs(response.data);
+        }
+      } catch (error) {
+        console.error('Error al cargar PQRs:', error);
+      } finally {
+        setLoading(false);
+      }
+    }
+    loadData();
+  }, []);
 
   const getStatusColor = (estado: string) => {
     switch (estado) {
@@ -52,6 +63,12 @@ export default function PQRPage() {
     );
   };
 
+  const filteredPqrs = pqrs.filter(pqr => 
+    pqr.radicado?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+    pqr.titulo?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+    pqr.conjunto?.nombre?.toLowerCase().includes(searchTerm.toLowerCase())
+  );
+
   return (
     <div className="animate-fade-in">
       {/* Header Section */}
@@ -70,7 +87,7 @@ export default function PQRPage() {
         <div className="bg-white rounded-2xl p-6 border border-slate-100 shadow-sm flex items-center justify-between">
           <div>
             <p className="text-sm font-medium text-slate-500 mb-1">Total PQRs</p>
-            <h3 className="text-3xl font-bold text-slate-800">24</h3>
+            <h3 className="text-3xl font-bold text-slate-800">{pqrs.length}</h3>
           </div>
           <div className="w-12 h-12 rounded-full bg-slate-50 flex items-center justify-center">
             <FileText className="text-slate-400" size={24} />
@@ -79,7 +96,7 @@ export default function PQRPage() {
         <div className="bg-white rounded-2xl p-6 border border-slate-100 shadow-sm flex items-center justify-between">
           <div>
             <p className="text-sm font-medium text-slate-500 mb-1">Abiertas</p>
-            <h3 className="text-3xl font-bold text-blue-600">8</h3>
+            <h3 className="text-3xl font-bold text-blue-600">{pqrs.filter(p => p.estado === 'ABIERTA').length}</h3>
           </div>
           <div className="w-12 h-12 rounded-full bg-blue-50 flex items-center justify-center">
             <AlertCircle className="text-blue-500" size={24} />
@@ -88,7 +105,7 @@ export default function PQRPage() {
         <div className="bg-white rounded-2xl p-6 border border-slate-100 shadow-sm flex items-center justify-between">
           <div>
             <p className="text-sm font-medium text-slate-500 mb-1">En Proceso</p>
-            <h3 className="text-3xl font-bold text-amber-600">5</h3>
+            <h3 className="text-3xl font-bold text-amber-600">{pqrs.filter(p => p.estado === 'EN_PROCESO').length}</h3>
           </div>
           <div className="w-12 h-12 rounded-full bg-amber-50 flex items-center justify-center">
             <Clock className="text-amber-500" size={24} />
@@ -97,7 +114,7 @@ export default function PQRPage() {
         <div className="bg-white rounded-2xl p-6 border border-slate-100 shadow-sm flex items-center justify-between">
           <div>
             <p className="text-sm font-medium text-slate-500 mb-1">Resueltas</p>
-            <h3 className="text-3xl font-bold text-emerald-600">11</h3>
+            <h3 className="text-3xl font-bold text-emerald-600">{pqrs.filter(p => p.estado === 'RESUELTA').length}</h3>
           </div>
           <div className="w-12 h-12 rounded-full bg-emerald-50 flex items-center justify-center">
             <CheckCircle2 className="text-emerald-500" size={24} />
@@ -129,60 +146,71 @@ export default function PQRPage() {
 
         {/* Table */}
         <div className="overflow-x-auto">
-          <table className="w-full text-left text-sm whitespace-nowrap">
-            <thead className="bg-slate-50 text-slate-500 uppercase font-medium">
-              <tr>
-                <th className="px-6 py-4">Radicado</th>
-                <th className="px-6 py-4">Asunto</th>
-                <th className="px-6 py-4">Conjunto</th>
-                <th className="px-6 py-4">Estado</th>
-                <th className="px-6 py-4">Prioridad</th>
-                <th className="px-6 py-4">Fecha</th>
-                <th className="px-6 py-4 text-right">Acciones</th>
-              </tr>
-            </thead>
-            <tbody className="divide-y divide-slate-100">
-              {mockPQRs.map((pqr) => (
-                <tr key={pqr.id} className="hover:bg-slate-50/80 transition-colors group">
-                  <td className="px-6 py-4 font-mono font-medium text-brand-600">{pqr.id}</td>
-                  <td className="px-6 py-4">
-                    <div className="flex flex-col gap-1">
-                      <span className="font-semibold text-slate-800">{pqr.titulo}</span>
-                      <div>{getTipoBadge(pqr.tipo)}</div>
-                    </div>
-                  </td>
-                  <td className="px-6 py-4 text-slate-600">{pqr.conjunto}</td>
-                  <td className="px-6 py-4">
-                    <span className={`inline-flex items-center px-2.5 py-1 rounded-full text-xs font-semibold border ${getStatusColor(pqr.estado)}`}>
-                      {getStatusIcon(pqr.estado)}
-                      {pqr.estado.replace('_', ' ')}
-                    </span>
-                  </td>
-                  <td className="px-6 py-4">
-                    <span className={`inline-flex items-center px-2 py-0.5 rounded text-xs font-semibold ${getPriorityColor(pqr.prioridad)}`}>
-                      {pqr.prioridad}
-                    </span>
-                  </td>
-                  <td className="px-6 py-4 text-slate-500">{pqr.fecha}</td>
-                  <td className="px-6 py-4 text-right">
-                    <button className="p-2 text-slate-400 hover:text-brand-500 rounded-lg hover:bg-brand-50 transition-colors">
-                      <MoreVertical size={20} />
-                    </button>
-                  </td>
+          {loading ? (
+            <div className="p-12 text-center text-slate-500">Cargando datos del servidor...</div>
+          ) : (
+            <table className="w-full text-left text-sm whitespace-nowrap">
+              <thead className="bg-slate-50 text-slate-500 uppercase font-medium">
+                <tr>
+                  <th className="px-6 py-4">Radicado</th>
+                  <th className="px-6 py-4">Asunto</th>
+                  <th className="px-6 py-4">Conjunto</th>
+                  <th className="px-6 py-4">Estado</th>
+                  <th className="px-6 py-4">Prioridad</th>
+                  <th className="px-6 py-4">Fecha</th>
+                  <th className="px-6 py-4 text-right">Acciones</th>
                 </tr>
-              ))}
-            </tbody>
-          </table>
+              </thead>
+              <tbody className="divide-y divide-slate-100">
+                {filteredPqrs.length === 0 ? (
+                  <tr>
+                    <td colSpan={7} className="px-6 py-12 text-center text-slate-500">No hay PQRs que coincidan con la búsqueda.</td>
+                  </tr>
+                ) : (
+                  filteredPqrs.map((pqr) => (
+                    <tr key={pqr.id} className="hover:bg-slate-50/80 transition-colors group">
+                      <td className="px-6 py-4 font-mono font-medium text-brand-600">{pqr.radicado}</td>
+                      <td className="px-6 py-4">
+                        <div className="flex flex-col gap-1">
+                          <span className="font-semibold text-slate-800">{pqr.titulo}</span>
+                          <div>{getTipoBadge(pqr.tipo)}</div>
+                        </div>
+                      </td>
+                      <td className="px-6 py-4 text-slate-600">{pqr.conjunto?.nombre || 'N/A'}</td>
+                      <td className="px-6 py-4">
+                        <span className={`inline-flex items-center px-2.5 py-1 rounded-full text-xs font-semibold border ${getStatusColor(pqr.estado)}`}>
+                          {getStatusIcon(pqr.estado)}
+                          {pqr.estado.replace('_', ' ')}
+                        </span>
+                      </td>
+                      <td className="px-6 py-4">
+                        <span className={`inline-flex items-center px-2 py-0.5 rounded text-xs font-semibold ${getPriorityColor(pqr.prioridad)}`}>
+                          {pqr.prioridad}
+                        </span>
+                      </td>
+                      <td className="px-6 py-4 text-slate-500">
+                        {new Date(pqr.createdAt).toLocaleDateString()}
+                      </td>
+                      <td className="px-6 py-4 text-right">
+                        <button className="p-2 text-slate-400 hover:text-brand-500 rounded-lg hover:bg-brand-50 transition-colors">
+                          <MoreVertical size={20} />
+                        </button>
+                      </td>
+                    </tr>
+                  ))
+                )}
+              </tbody>
+            </table>
+          )}
         </div>
 
         {/* Pagination */}
         <div className="p-4 border-t border-slate-200 flex items-center justify-between text-sm text-slate-500 bg-slate-50">
-          <span>Mostrando 1 a 4 de 24 resultados</span>
+          <span>Mostrando {filteredPqrs.length} resultados</span>
           <div className="flex gap-1">
             <button className="px-3 py-1 rounded border border-slate-200 bg-white hover:bg-slate-50 disabled:opacity-50">Anterior</button>
             <button className="px-3 py-1 rounded border border-slate-200 bg-brand-50 text-brand-600 font-medium">1</button>
-            <button className="px-3 py-1 rounded border border-slate-200 bg-white hover:bg-slate-50">2</button>
-            <button className="px-3 py-1 rounded border border-slate-200 bg-white hover:bg-slate-50">Siguiente</button>
+            <button className="px-3 py-1 rounded border border-slate-200 bg-white hover:bg-slate-50 disabled:opacity-50">Siguiente</button>
           </div>
         </div>
 

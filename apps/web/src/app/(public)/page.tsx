@@ -2,6 +2,7 @@ import type { Metadata } from 'next';
 import Image from 'next/image';
 import Link from 'next/link';
 import { Leaf, Scissors, Clock, ShieldCheck, Mail, Phone, MapPin, ArrowRight } from 'lucide-react';
+import { QuoteButton } from '@/components/ui/QuoteButton';
 
 export const metadata: Metadata = {
   title: 'La Martina — Gestión Inteligente de Conjuntos Residenciales',
@@ -28,9 +29,7 @@ export default function LandingPage() {
             Gestión integral de jardinería, paisajismo y mantenimiento con tecnología en tiempo real.
           </p>
           <div className="flex flex-col sm:flex-row items-center justify-center gap-4">
-            <a href="https://wa.me/573000000000" target="_blank" rel="noreferrer" className="bg-brand-500 hover:bg-brand-600 text-white px-8 py-4 rounded-full font-bold text-lg transition-all shadow-lg shadow-brand-500/40 flex items-center gap-2">
-              Solicitar una Cotización <ArrowRight size={20} />
-            </a>
+            <QuoteButton />
             <Link href="#servicios" className="bg-white/10 hover:bg-white/20 backdrop-blur-md border border-white/30 text-white px-8 py-4 rounded-full font-bold text-lg transition-all">
               Ver Resultados
             </Link>
@@ -122,40 +121,40 @@ export default function LandingPage() {
           <p className="text-slate-400 max-w-2xl mx-auto text-lg">Un recorrido visual por los proyectos que hemos transformado recientemente.</p>
         </div>
         
-        {/* Grid de Masonry Expandido */}
-        <div className="grid grid-cols-2 md:grid-cols-4 gap-1">
-          {/* Fila 1 */}
-          <div className="aspect-square relative overflow-hidden group">
-            <Image src="/paisajismo-1.jpeg" alt="Galería" fill className="object-cover transition-transform duration-700 group-hover:scale-110" />
-            <div className="absolute inset-0 bg-slate-900/40 group-hover:bg-transparent transition-colors duration-500" />
-          </div>
-          <div className="col-span-2 aspect-[2/1] md:aspect-auto relative overflow-hidden group">
-            <Image src="/trabajos (1).jpeg" alt="Galería Gran Formato" fill className="object-cover transition-transform duration-700 group-hover:scale-110" />
-            <div className="absolute inset-0 bg-slate-900/40 group-hover:bg-transparent transition-colors duration-500" />
-          </div>
-          <div className="aspect-square relative overflow-hidden group">
-            <Image src="/equipo_de_trabajo (1).jpeg" alt="Nuestro Equipo" fill className="object-cover transition-transform duration-700 group-hover:scale-110" />
-            <div className="absolute inset-0 bg-slate-900/40 group-hover:bg-transparent transition-colors duration-500" />
-          </div>
-
-          {/* Fila 2 */}
-          <div className="aspect-square relative overflow-hidden group">
-            <video autoPlay loop muted playsInline className="object-cover w-full h-full grayscale group-hover:grayscale-0 transition-all duration-700">
-              <source src="/trabajos (1).mp4" type="video/mp4" />
-            </video>
-            <div className="absolute inset-0 bg-brand-500/20 group-hover:bg-transparent transition-colors duration-500 pointer-events-none" />
-          </div>
-          <div className="aspect-square relative overflow-hidden group">
-            <Image src="/paisajismo (4).jpeg" alt="Galería" fill className="object-cover transition-transform duration-700 group-hover:scale-110" />
-            <div className="absolute inset-0 bg-slate-900/40 group-hover:bg-transparent transition-colors duration-500" />
-          </div>
-          <div className="aspect-square relative overflow-hidden group">
-            <Image src="/equipo_de_trabajo (2).jpeg" alt="Galería" fill className="object-cover transition-transform duration-700 group-hover:scale-110" />
-            <div className="absolute inset-0 bg-slate-900/40 group-hover:bg-transparent transition-colors duration-500" />
-          </div>
-          <div className="aspect-square relative overflow-hidden group">
-            <Image src="/trabajos (3).jpeg" alt="Galería de Trabajo" fill className="object-cover transition-transform duration-700 group-hover:scale-110" />
-            <div className="absolute inset-0 bg-slate-900/40 group-hover:bg-transparent transition-colors duration-500" />
+        {/* Carrusel Móvil (Marquee Infinito) */}
+        <div className="overflow-hidden whitespace-nowrap flex w-full relative">
+          {/* Overlay fade edges para suavizar el inicio y fin */}
+          <div className="absolute top-0 left-0 w-16 md:w-48 h-full bg-gradient-to-r from-slate-900 to-transparent z-10 pointer-events-none" />
+          <div className="absolute top-0 right-0 w-16 md:w-48 h-full bg-gradient-to-l from-slate-900 to-transparent z-10 pointer-events-none" />
+          
+          {/* Contenedor animado */}
+          <div className="flex animate-marquee hover:[animation-play-state:paused] gap-6 px-3">
+            {[1, 2].map((set) => (
+              <div key={set} className="flex gap-6 min-w-max">
+                <div className="w-[320px] md:w-[480px] aspect-[4/3] relative overflow-hidden rounded-2xl group cursor-pointer shadow-xl">
+                  <Image src="/trabajos (1).jpeg" alt="Resultados" fill className="object-cover transition-transform duration-700 group-hover:scale-110" />
+                  <div className="absolute inset-0 bg-slate-900/40 group-hover:bg-transparent transition-colors duration-500" />
+                </div>
+                <div className="w-[320px] md:w-[480px] aspect-[4/3] relative overflow-hidden rounded-2xl group cursor-pointer shadow-xl">
+                  <Image src="/trabajos (2).jpeg" alt="Resultados" fill className="object-cover transition-transform duration-700 group-hover:scale-110" />
+                  <div className="absolute inset-0 bg-slate-900/40 group-hover:bg-transparent transition-colors duration-500" />
+                </div>
+                <div className="w-[320px] md:w-[480px] aspect-[4/3] relative overflow-hidden rounded-2xl group cursor-pointer shadow-xl">
+                  <video autoPlay loop muted playsInline className="object-cover w-full h-full grayscale group-hover:grayscale-0 transition-all duration-700">
+                    <source src="/trabajos (1).mp4" type="video/mp4" />
+                  </video>
+                  <div className="absolute inset-0 bg-brand-500/20 group-hover:bg-transparent transition-colors duration-500 pointer-events-none" />
+                </div>
+                <div className="w-[320px] md:w-[480px] aspect-[4/3] relative overflow-hidden rounded-2xl group cursor-pointer shadow-xl">
+                  <Image src="/trabajos (4).jpeg" alt="Resultados" fill className="object-cover transition-transform duration-700 group-hover:scale-110" />
+                  <div className="absolute inset-0 bg-slate-900/40 group-hover:bg-transparent transition-colors duration-500" />
+                </div>
+                <div className="w-[320px] md:w-[480px] aspect-[4/3] relative overflow-hidden rounded-2xl group cursor-pointer shadow-xl">
+                  <Image src="/trabajos (3).jpeg" alt="Resultados" fill className="object-cover transition-transform duration-700 group-hover:scale-110" />
+                  <div className="absolute inset-0 bg-slate-900/40 group-hover:bg-transparent transition-colors duration-500" />
+                </div>
+              </div>
+            ))}
           </div>
         </div>
       </section>

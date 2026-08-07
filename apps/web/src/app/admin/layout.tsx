@@ -3,7 +3,8 @@
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import { LayoutDashboard, MessageSquareWarning, CalendarClock, Users, LogOut, Menu, X } from 'lucide-react';
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
+import { useRouter } from 'next/navigation';
 
 const sidebarLinks = [
   { name: 'Dashboard', href: '/admin/dashboard', icon: LayoutDashboard },
@@ -18,7 +19,34 @@ export default function AdminLayout({
   children: React.ReactNode;
 }) {
   const pathname = usePathname();
+  const router = useRouter();
   const [isSidebarOpen, setSidebarOpen] = useState(false);
+  const [user, setUser] = useState<any>(null);
+  const [isLoading, setIsLoading] = useState(true);
+
+  useEffect(() => {
+    const token = localStorage.getItem('accessToken');
+    if (!token) {
+      router.push('/login');
+      return;
+    }
+    try {
+      const userData = JSON.parse(localStorage.getItem('user') || '{}');
+      setUser(userData);
+    } catch (e) {}
+    setIsLoading(false);
+  }, [router]);
+
+  const handleLogout = (e: React.MouseEvent) => {
+    e.preventDefault();
+    localStorage.removeItem('accessToken');
+    localStorage.removeItem('user');
+    router.push('/login');
+  };
+
+  if (isLoading) {
+    return <div className="min-h-screen bg-slate-50 flex items-center justify-center">Cargando...</div>;
+  }
 
   return (
     <div className="min-h-screen bg-slate-50 flex">
@@ -72,20 +100,21 @@ export default function AdminLayout({
           <div className="pt-4 border-t border-slate-800">
             <div className="flex items-center gap-3 px-4 py-3 mb-4">
               <div className="w-10 h-10 rounded-full bg-slate-800 flex items-center justify-center font-bold text-brand-400">
-                SA
+                {user?.nombre?.charAt(0) || 'A'}
               </div>
-              <div>
-                <p className="text-sm font-bold text-white">Super Admin</p>
-                <p className="text-xs text-slate-400">admin@lamartina.com</p>
+              <div className="overflow-hidden">
+                <p className="text-sm font-bold text-white truncate">{user?.nombre} {user?.apellido}</p>
+                <p className="text-xs text-slate-400 truncate">{user?.email}</p>
               </div>
             </div>
-            <Link
-              href="/"
-              className="flex items-center gap-3 px-4 py-3 rounded-xl text-slate-400 hover:bg-red-500/10 hover:text-red-400 transition-all font-medium"
+            <a
+              href="#"
+              onClick={handleLogout}
+              className="flex items-center gap-3 px-4 py-3 rounded-xl text-slate-400 hover:bg-red-500/10 hover:text-red-400 transition-all font-medium cursor-pointer"
             >
               <LogOut size={20} />
               Cerrar Sesión
-            </Link>
+            </a>
           </div>
         </div>
       </aside>
