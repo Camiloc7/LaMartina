@@ -2,9 +2,10 @@
 
 import Link from 'next/link';
 import { usePathname, useRouter } from 'next/navigation';
-import { LayoutDashboard, MessageSquareWarning, CalendarClock, Users, LogOut, Menu, X, Building2, CalendarDays, ChevronLeft, ChevronRight, DollarSign } from 'lucide-react';
+import { LayoutDashboard, MessageSquareWarning, CalendarClock, Users, LogOut, Menu, X, Building2, CalendarDays, ChevronLeft, ChevronRight, DollarSign, Settings } from 'lucide-react';
 import { useState, useEffect } from 'react';
 import { fetchApi } from '@/lib/api';
+import Image from 'next/image';
 
 const sidebarLinks = [
   { name: 'Dashboard', href: '/admin/dashboard', icon: LayoutDashboard },
@@ -14,6 +15,7 @@ const sidebarLinks = [
   { name: 'Jornadas', href: '/admin/jornadas', icon: CalendarClock },
   { name: 'Usuarios', href: '/admin/usuarios', icon: Users },
   { name: 'Conjuntos', href: '/admin/conjuntos', icon: Building2 },
+  { name: 'Configuración', href: '/admin/configuracion', icon: Settings },
 ];
 
 export default function AdminLayout({
@@ -88,8 +90,15 @@ export default function AdminLayout({
         lg:static lg:flex-shrink-0 flex flex-col
       `}>
         <div className={`h-20 flex items-center px-6 border-b border-brand-800/50 ${isCollapsed ? 'justify-center' : 'justify-between'}`}>
-          <Link href="/" className="font-bold text-xl tracking-tight text-white flex items-center gap-2">
-            <span className="text-orange-400">La</span> {!isCollapsed && 'Martina'}
+          <Link href="/" className="flex items-center gap-2 overflow-hidden">
+            <Image 
+              src="/logo.png" 
+              alt="La Martina" 
+              width={isCollapsed ? 40 : 50} 
+              height={isCollapsed ? 40 : 50} 
+              className="rounded-lg object-cover bg-white p-1"
+            />
+            {!isCollapsed && <span className="font-bold text-xl tracking-tight text-white whitespace-nowrap">La Martina</span>}
           </Link>
           {!isCollapsed && (
             <button className="lg:hidden text-brand-200 hover:text-white" onClick={() => setSidebarOpen(false)}>

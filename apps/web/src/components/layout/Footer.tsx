@@ -9,7 +9,7 @@ export function Footer() {
         
         <div>
           <div className="flex items-center gap-3 mb-6">
-            <Image src="/logo.jpeg" alt="La Martina Logo" width={40} height={40} className="rounded object-cover grayscale brightness-200" />
+            <Image src="/logo.png" alt="La Martina Logo" width={40} height={40} className="rounded object-cover grayscale brightness-200" />
             <span className="font-bold text-2xl text-white tracking-tight">La Martina</span>
           </div>
           <p className="text-slate-400 text-sm leading-relaxed pr-4">

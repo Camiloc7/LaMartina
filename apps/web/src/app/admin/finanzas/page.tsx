@@ -2,12 +2,14 @@
 
 import { useState, useEffect } from 'react';
 import { fetchApi } from '@/lib/api';
-import { DollarSign, AlertCircle, Loader2, CreditCard, TrendingUp, Calendar as CalendarIcon, CheckCircle, Wallet, Plus } from 'lucide-react';
+import { DollarSign, AlertCircle, Loader2, CreditCard, TrendingUp, Calendar as CalendarIcon, CheckCircle, Wallet, Plus, Download } from 'lucide-react';
 import Link from 'next/link';
+import { FinancePDFDownloadButton } from '@/components/pdf/FinancePDFDownloadButtons';
 
 export default function AdminFinanzasPage() {
   const [resumen, setResumen] = useState<any>(null);
   const [cotizaciones, setCotizaciones] = useState<any[]>([]);
+  const [configuracion, setConfiguracion] = useState<any>(null);
   const [loading, setLoading] = useState(true);
 
   // Estados para modal de pago
@@ -34,6 +36,9 @@ export default function AdminFinanzasPage() {
         const cobrables = (resCots.data || []).filter((c: any) => c.estado === 'APROBADA');
         setCotizaciones(cobrables);
       }
+
+      const resConf = await fetchApi('/configuracion/public');
+      if (resConf.success) setConfiguracion(resConf.data);
     } catch (err) {
       console.error(err);
     } finally {
@@ -168,14 +173,22 @@ export default function AdminFinanzasPage() {
                       </span>
                     </td>
                     <td className="p-4 text-right">
-                      {cot.estadoPago !== 'PAGADO' && (
-                        <button 
-                          onClick={() => handleAbrirModalPago(cot)}
-                          className="inline-flex items-center gap-1 bg-brand-50 text-brand-700 px-3 py-1.5 rounded-lg text-sm font-semibold hover:bg-brand-100 transition-colors"
-                        >
-                          <Plus size={16} /> Pago
-                        </button>
-                      )}
+                      <div className="flex items-center justify-end gap-2">
+                        {configuracion && (
+                          <>
+                            <FinancePDFDownloadButton cotizacion={cot} configuracion={configuracion} type="cotizacion" />
+                            <FinancePDFDownloadButton cotizacion={cot} configuracion={configuracion} type="cuenta_cobro" />
+                          </>
+                        )}
+                        {cot.estadoPago !== 'PAGADO' && (
+                          <button 
+                            onClick={() => handleAbrirModalPago(cot)}
+                            className="inline-flex items-center gap-1 bg-brand-50 text-brand-700 px-3 py-1.5 rounded-lg text-sm font-semibold hover:bg-brand-100 transition-colors"
+                          >
+                            <Plus size={16} /> Pago
+                          </button>
+                        )}
+                      </div>
                     </td>
                   </tr>
                 );

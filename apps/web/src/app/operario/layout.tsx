@@ -4,6 +4,7 @@ import { useState, useEffect } from 'react';
 import { useRouter, usePathname } from 'next/navigation';
 import Link from 'next/link';
 import { CalendarClock, User, LogOut, Home, MessageSquareWarning, Wrench, Bell } from 'lucide-react';
+import Image from 'next/image';
 import { fetchApi } from '@/lib/api';
 
 export default function OperarioLayout({
@@ -73,13 +74,16 @@ export default function OperarioLayout({
       <header className="sticky top-0 z-40 bg-slate-950/60 backdrop-blur-xl border-b border-slate-800/50 supports-[backdrop-filter]:bg-slate-950/30">
         <div className="px-5 h-16 flex items-center justify-between">
           <div className="flex items-center gap-3">
-            <div className="relative">
-              <div className="w-10 h-10 rounded-full bg-gradient-to-br from-brand-400 to-brand-600 p-[2px]">
-                <div className="w-full h-full rounded-full bg-slate-950 flex items-center justify-center text-brand-400 font-bold text-lg">
-                  {user?.nombre?.charAt(0) || 'O'}
-                </div>
-              </div>
-              <div className="absolute bottom-0 right-0 w-3 h-3 bg-emerald-500 rounded-full border-2 border-slate-950"></div>
+            <div className="relative w-12 h-12 flex items-center justify-center">
+              <div className="absolute inset-0 bg-gradient-to-br from-brand-400 to-brand-600 rounded-2xl rotate-3 opacity-50 blur-sm"></div>
+              <Image 
+                src="/logo.png" 
+                alt="Logo La Martina" 
+                width={40} 
+                height={40} 
+                className="relative z-10 rounded-xl border-2 border-slate-900 object-cover"
+              />
+              <div className="absolute bottom-0 right-0 w-3 h-3 bg-emerald-500 rounded-full border-2 border-slate-950 z-20"></div>
             </div>
             <div>
               <p className="font-bold text-slate-100 text-sm leading-tight">Hola, {user?.nombre}</p>

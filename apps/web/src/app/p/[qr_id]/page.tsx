@@ -2,6 +2,9 @@
 
 import React, { useState, use } from 'react';
 import { Lock, Home, FileText, MessageSquare, AlertCircle, Loader2 } from 'lucide-react';
+import Image from 'next/image';
+import ContactFooter from '@/components/ContactFooter';
+import { PDFDownloadButton } from '@/components/pdf/PDFDownloadButton';
 
 export default function QrPortalPage({ params }: { params: Promise<{ qr_id: string }> }) {
   // En Next.js 15, params es una Promesa.
@@ -14,6 +17,7 @@ export default function QrPortalPage({ params }: { params: Promise<{ qr_id: stri
   const [propiedad, setPropiedad] = useState<any>(null);
   const [historial, setHistorial] = useState<any[]>([]);
   const [loadingHistorial, setLoadingHistorial] = useState(false);
+  const [config, setConfig] = useState<any>(null);
 
   const handleAuth = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -64,6 +68,12 @@ export default function QrPortalPage({ params }: { params: Promise<{ qr_id: stri
         const hData = await res.json();
         setHistorial(hData.data || []);
       }
+      
+      const resConf = await fetch(`${API_URL}/configuracion/public`);
+      if (resConf.ok) {
+        const cData = await resConf.json();
+        setConfig(cData.data || null);
+      }
     } catch (e) {
       console.error(e);
     } finally {
@@ -74,9 +84,13 @@ export default function QrPortalPage({ params }: { params: Promise<{ qr_id: stri
   if (!isAuthenticated) {
     return (
       <div className="flex flex-col items-center justify-center flex-1 space-y-6 animate-in fade-in zoom-in duration-500">
-        <div className="w-20 h-20 bg-emerald-100 rounded-full flex items-center justify-center mb-4 shadow-sm">
-          <Lock className="w-10 h-10 text-emerald-600" />
-        </div>
+        <Image 
+          src="/logo.png" 
+          alt="La Martina Logo" 
+          width={100} 
+          height={100} 
+          className="rounded-2xl shadow-lg shadow-slate-200/50 mb-4" 
+        />
         
         <div className="text-center space-y-2">
           <h2 className="text-2xl font-bold text-gray-900">Acceso Privado</h2>
@@ -152,18 +166,20 @@ export default function QrPortalPage({ params }: { params: Promise<{ qr_id: stri
           ) : (
             historial.map((trabajo: any) => (
               <div key={trabajo.id} className="w-full bg-white border border-gray-200 p-4 rounded-2xl flex items-center justify-between hover:border-emerald-300 hover:shadow-md transition-all group text-left">
-                <div className="flex items-center space-x-4">
-                  <div className="w-12 h-12 bg-blue-50 rounded-full flex items-center justify-center group-hover:bg-blue-100 transition-colors">
-                    <FileText className="w-6 h-6 text-blue-600" />
+                <div className="flex flex-col md:flex-row items-start md:items-center justify-between w-full">
+                  <div className="flex items-center space-x-4 mb-4 md:mb-0">
+                    <div className="w-12 h-12 bg-orange-50 rounded-full flex items-center justify-center group-hover:bg-orange-100 transition-colors">
+                      <FileText className="w-6 h-6 text-orange-600" />
+                    </div>
+                    <div>
+                      <p className="font-semibold text-gray-900">{trabajo.programacion?.cotizacion?.detalles?.descripcion || 'Mantenimiento Preventivo'}</p>
+                      <p className="text-sm text-gray-500">{new Date(trabajo.fechaFin || trabajo.createdAt).toLocaleDateString()}</p>
+                    </div>
                   </div>
-                  <div>
-                    <p className="font-semibold text-gray-900">{trabajo.programacion?.cotizacion?.detalles?.descripcion || 'Trabajo de limpieza'}</p>
-                    <p className="text-sm text-gray-500">{new Date(trabajo.fechaFin || trabajo.createdAt).toLocaleDateString()}</p>
+                  <div className="w-full md:w-auto">
+                    {config && <PDFDownloadButton trabajo={trabajo} configuracion={config} />}
                   </div>
                 </div>
-                {trabajo.evidenciaFotos && trabajo.evidenciaFotos.length > 0 && (
-                  <span className="text-blue-600 text-sm font-medium pr-2">Ver Evidencia</span>
-                )}
               </div>
             ))
           )}
@@ -184,6 +200,8 @@ export default function QrPortalPage({ params }: { params: Promise<{ qr_id: stri
         <button className="w-full bg-emerald-600 p-4 rounded-2xl flex items-center justify-center hover:bg-emerald-700 transition-all text-white shadow-lg mt-8 active:scale-95">
           <span className="font-bold text-lg">Solicitar Servicio Adicional</span>
         </button>
+        
+        <ContactFooter />
       </div>
     </div>
   );

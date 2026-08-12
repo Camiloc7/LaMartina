@@ -6,7 +6,7 @@ export function Navbar() {
     <header className="fixed top-0 w-full z-50 bg-white/95 backdrop-blur-md shadow-sm transition-all duration-300">
       <div className="max-w-7xl mx-auto px-6 h-20 flex items-center justify-between">
         <Link href="/" className="flex items-center gap-3 hover:opacity-80 transition-opacity">
-          <Image src="/logo.jpeg" alt="La Martina Logo" width={50} height={50} className="rounded-md object-cover" />
+          <Image src="/logo.png" alt="La Martina Logo" width={50} height={50} className="rounded-md object-cover" />
           <span className="font-bold text-2xl text-slate-800 tracking-tight hidden md:block">La Martina</span>
         </Link>
         

@@ -20,6 +20,7 @@ import { conjuntosRouter } from './modules/conjuntos/conjuntos.router';
 import { propiedadesRouter } from './modules/propiedades/propiedades.router';
 import { cotizacionesRouter } from './modules/cotizaciones/cotizaciones.router';
 import { serviciosRouter } from './modules/servicios/servicios.router';
+import { configuracionRouter } from './modules/configuracion/configuracion.router';
 
 dotenv.config({ path: path.resolve(process.cwd(), '../../.env') });
 
@@ -56,6 +57,7 @@ app.use('/api/v1/conjuntos', conjuntosRouter);
 app.use('/api/v1/propiedades', propiedadesRouter);
 app.use('/api/v1/cotizaciones', cotizacionesRouter);
 app.use('/api/v1/servicios', serviciosRouter);
+app.use('/api/v1/configuracion', configuracionRouter);
 
 // ─── Error Handler ────────────────────────────────────────────────────────────
 

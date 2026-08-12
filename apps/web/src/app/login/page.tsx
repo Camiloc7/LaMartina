@@ -48,7 +48,7 @@ export default function LoginPage() {
         <div className="mx-auto w-full max-w-sm lg:w-96">
           <div className="text-center sm:text-left">
             <Link href="/" className="inline-block transition-transform hover:scale-105">
-              <Image src="/logo.jpeg" alt="La Martina Logo" width={120} height={120} className="rounded-2xl mx-auto sm:mx-0 shadow-lg shadow-slate-200/50" />
+              <Image src="/logo.png" alt="La Martina Logo" width={120} height={120} className="rounded-2xl mx-auto sm:mx-0 shadow-lg shadow-slate-200/50" />
             </Link>
             <h2 className="mt-8 text-3xl font-bold tracking-tight text-slate-900 font-display">
               Portal Administradores
