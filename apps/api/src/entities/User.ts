@@ -8,8 +8,9 @@ import {
 } from 'typeorm';
 import { Jornada } from './Jornada';
 import { PQR } from './PQR';
+import { Propiedad } from './Propiedad';
 
-export type UserRole = 'SUPER_ADMIN' | 'ADMIN' | 'OPERARIO' | 'CLIENTE';
+export type UserRole = 'SUPER_ADMIN' | 'ADMIN' | 'OPERARIO' | 'CLIENTE' | 'PROPIETARIO';
 
 @Entity('users')
 export class User {
@@ -33,7 +34,7 @@ export class User {
 
   @Column({
     type: 'enum',
-    enum: ['SUPER_ADMIN', 'ADMIN', 'OPERARIO', 'CLIENTE'],
+    enum: ['SUPER_ADMIN', 'ADMIN', 'OPERARIO', 'CLIENTE', 'PROPIETARIO'],
     default: 'CLIENTE',
   })
   rol!: UserRole;
@@ -54,6 +55,9 @@ export class User {
 
   @OneToMany(() => PQR, (pqr) => pqr.cliente)
   pqrs?: PQR[];
+
+  @OneToMany(() => Propiedad, (propiedad) => propiedad.propietario)
+  propiedades?: Propiedad[];
 
   @CreateDateColumn()
   createdAt!: Date;

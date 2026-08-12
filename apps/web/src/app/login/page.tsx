@@ -24,8 +24,8 @@ export default function LoginPage() {
         body: JSON.stringify({ email, password }),
       });
 
-      if (response.success && response.data?.accessToken) {
-        localStorage.setItem('accessToken', response.data.accessToken);
+      if (response.success) {
+        // El backend ya estableció la cookie HttpOnly con el token
         localStorage.setItem('user', JSON.stringify(response.data.user));
         
         if (response.data.user.rol === 'OPERARIO') {

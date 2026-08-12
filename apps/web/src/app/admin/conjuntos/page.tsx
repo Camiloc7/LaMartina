@@ -1,8 +1,9 @@
 'use client';
 
 import { useState, useEffect } from 'react';
-import { Search, Filter, Home, Building2, MapPin, Plus, X, MoreVertical, Edit2, Trash2 } from 'lucide-react';
+import { Search, Filter, Home, Building2, MapPin, Plus, X, MoreVertical, Edit2, Trash2, ArrowRight } from 'lucide-react';
 import { fetchApi } from '@/lib/api';
+import Link from 'next/link';
 
 export default function ConjuntosPage() {
   const [searchTerm, setSearchTerm] = useState('');
@@ -145,12 +146,9 @@ export default function ConjuntosPage() {
                   <Home size={28} className="text-brand-500 group-hover:text-white transition-colors" />
                 </div>
                 <div className="flex gap-2">
-                  <button className="p-2 text-slate-400 hover:text-brand-500 hover:bg-brand-50 rounded-full transition-colors opacity-0 group-hover:opacity-100">
-                    <Edit2 size={18} />
-                  </button>
-                  <button className="p-2 text-slate-400 hover:text-red-500 hover:bg-red-50 rounded-full transition-colors opacity-0 group-hover:opacity-100">
-                    <Trash2 size={18} />
-                  </button>
+                  <Link href={`/admin/conjuntos/${c.id}`} className="p-2 text-slate-400 hover:text-brand-500 hover:bg-brand-50 rounded-full transition-colors opacity-0 group-hover:opacity-100">
+                    <ArrowRight size={18} />
+                  </Link>
                 </div>
               </div>
 

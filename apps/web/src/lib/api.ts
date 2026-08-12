@@ -4,20 +4,15 @@ export async function fetchApi<T = any>(
   endpoint: string,
   options: RequestInit = {}
 ): Promise<{ success: boolean; data?: T; message?: string }> {
-  const token = typeof window !== 'undefined' ? localStorage.getItem('accessToken') : null;
-
   const headers = new Headers(options.headers || {});
   if (!options.body || typeof options.body === 'string') {
     headers.set('Content-Type', 'application/json');
-  }
-  
-  if (token) {
-    headers.set('Authorization', `Bearer ${token}`);
   }
 
   const res = await fetch(`${API_URL}${endpoint}`, {
     ...options,
     headers,
+    credentials: 'include', // Important to send cookies
   });
 
   const data = await res.json();

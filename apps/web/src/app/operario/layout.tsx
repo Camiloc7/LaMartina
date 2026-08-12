@@ -4,6 +4,7 @@ import { useState, useEffect } from 'react';
 import { useRouter, usePathname } from 'next/navigation';
 import Link from 'next/link';
 import { CalendarClock, User, LogOut, Map, Bell } from 'lucide-react';
+import { fetchApi } from '@/lib/api';
 
 export default function OperarioLayout({
   children,
@@ -16,25 +17,38 @@ export default function OperarioLayout({
   const [isLoading, setIsLoading] = useState(true);
 
   useEffect(() => {
-    const token = localStorage.getItem('accessToken');
-    if (!token) {
-      router.push('/login');
-      return;
-    }
-    try {
-      const userData = JSON.parse(localStorage.getItem('user') || '{}');
-      if (userData.rol !== 'OPERARIO' && userData.rol !== 'ADMIN' && userData.rol !== 'SUPER_ADMIN') {
+    const checkAuth = async () => {
+      try {
+        const response = await fetchApi('/auth/me');
+        if (response.success && response.data) {
+          const userData = response.data.user || response.data;
+          
+          if (userData.rol !== 'OPERARIO' && userData.rol !== 'ADMIN' && userData.rol !== 'SUPER_ADMIN') {
+            throw new Error('Unauthorized role');
+          }
+
+          setUser(userData);
+          localStorage.setItem('user', JSON.stringify(userData));
+        } else {
+          throw new Error('Not authenticated');
+        }
+      } catch (error) {
+        localStorage.removeItem('user');
         router.push('/login');
-        return;
+      } finally {
+        setIsLoading(false);
       }
-      setUser(userData);
-    } catch (e) {}
-    setIsLoading(false);
+    };
+    checkAuth();
   }, [router]);
 
-  const handleLogout = (e: React.MouseEvent) => {
+  const handleLogout = async (e: React.MouseEvent) => {
     e.preventDefault();
-    localStorage.removeItem('accessToken');
+    try {
+      await fetchApi('/auth/logout', { method: 'POST' });
+    } catch (error) {
+      console.error(error);
+    }
     localStorage.removeItem('user');
     router.push('/login');
   };

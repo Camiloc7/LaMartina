@@ -30,16 +30,33 @@ export async function login(req: Request, res: Response): Promise<void> {
     { expiresIn: process.env['JWT_EXPIRES_IN'] ?? '7d' } as object
   );
 
-  const { password: _pwd, ...userWithoutPassword } = user;
+  res.cookie('token', token, {
+    httpOnly: true,
+    secure: process.env['NODE_ENV'] === 'production',
+    sameSite: 'lax',
+    maxAge: 24 * 60 * 60 * 1000, // 24 hours
+  });
 
   res.json({
     success: true,
     data: {
-      accessToken: token,
-      user: userWithoutPassword,
+      user: {
+        id: user.id,
+        email: user.email,
+        nombre: user.nombre,
+        apellido: user.apellido,
+        rol: user.rol,
+        activo: user.activo,
+      },
     },
   });
 }
+
+export async function logout(req: Request, res: Response): Promise<void> {
+  res.clearCookie('token');
+  res.json({ success: true, message: 'Logged out successfully' });
+}
+
 
 export async function register(req: Request, res: Response): Promise<void> {
   const { nombre, apellido, email, password, telefono, rol } = req.body as {

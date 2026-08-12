@@ -10,8 +10,9 @@ import {
 } from 'typeorm';
 import { User } from './User';
 import { Conjunto } from './Conjunto';
+import { Propiedad } from './Propiedad';
 
-export type PQRTipo = 'PETICION' | 'QUEJA' | 'RECLAMO';
+export type PQRTipo = 'PETICION' | 'QUEJA' | 'RECLAMO' | 'FELICITACION';
 export type PQREstado = 'ABIERTA' | 'EN_PROCESO' | 'RESUELTA' | 'CERRADA';
 export type PQRPrioridad = 'BAJA' | 'MEDIA' | 'ALTA' | 'URGENTE';
 
@@ -29,7 +30,7 @@ export class PQR {
 
   @Column({
     type: 'enum',
-    enum: ['PETICION', 'QUEJA', 'RECLAMO'],
+    enum: ['PETICION', 'QUEJA', 'RECLAMO', 'FELICITACION'],
   })
   tipo!: PQRTipo;
 
@@ -75,6 +76,13 @@ export class PQR {
 
   @Column({ name: 'conjunto_id' })
   conjuntoId!: string;
+
+  @ManyToOne(() => Propiedad, (propiedad) => propiedad.pqrs, { nullable: true })
+  @JoinColumn({ name: 'propiedad_id' })
+  propiedad?: Propiedad;
+
+  @Column({ name: 'propiedad_id', nullable: true })
+  propiedadId?: string;
 
   @ManyToOne(() => User, { nullable: true })
   @JoinColumn({ name: 'asignado_a_id' })

@@ -14,16 +14,14 @@ export interface AuthRequest extends Request {
 
 export function authenticate(
   req: Request,
-  _res: Response,
+  res: Response,
   next: NextFunction
 ): void {
-  const authHeader = req.headers.authorization;
+  const token = req.cookies.token || req.headers.authorization?.split(' ')[1];
 
-  if (!authHeader?.startsWith('Bearer ')) {
-    throw new ApiError('Token de autenticación requerido.', 401);
+  if (!token) {
+    throw new ApiError('No autenticado', 401);
   }
-
-  const token = authHeader.split(' ')[1]!;
 
   try {
     const payload = jwt.verify(

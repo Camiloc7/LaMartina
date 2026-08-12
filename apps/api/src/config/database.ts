@@ -6,6 +6,10 @@ import { User } from '../entities/User';
 import { Conjunto } from '../entities/Conjunto';
 import { Jornada } from '../entities/Jornada';
 import { PQR } from '../entities/PQR';
+import { Propiedad } from '../entities/Propiedad';
+import { Cotizacion } from '../entities/Cotizacion';
+import { ProgramacionServicio } from '../entities/ProgramacionServicio';
+import { OrdenTrabajo } from '../entities/OrdenTrabajo';
 
 dotenv.config({ path: path.resolve(process.cwd(), '../../.env') });
 
@@ -19,8 +23,8 @@ export const AppDataSource = new DataSource({
   database: process.env['DB_NAME'],
   synchronize: process.env['NODE_ENV'] === 'development', // Solo en dev
   logging: process.env['NODE_ENV'] === 'development',
-  entities: [User, Conjunto, Jornada, PQR],
-  migrations: ['dist/migrations/**/*.js'],
+  entities: [User, Conjunto, Jornada, PQR, Propiedad, Cotizacion, ProgramacionServicio, OrdenTrabajo],
+  migrations: ['src/migrations/**/*.ts', 'dist/migrations/**/*.js'],
   subscribers: [],
   ssl:
     process.env['NODE_ENV'] === 'production'

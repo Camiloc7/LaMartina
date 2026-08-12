@@ -6,6 +6,7 @@ import helmet from 'helmet';
 import morgan from 'morgan';
 import dotenv from 'dotenv';
 import path from 'path';
+import cookieParser from 'cookie-parser';
 
 import { AppDataSource } from './config/database';
 import { errorHandler } from './middleware/errorHandler';
@@ -16,6 +17,9 @@ import { usersRouter } from './modules/users/users.router';
 import { jornadasRouter } from './modules/jornadas/jornadas.router';
 import { pqrRouter } from './modules/pqr/pqr.router';
 import { conjuntosRouter } from './modules/conjuntos/conjuntos.router';
+import { propiedadesRouter } from './modules/propiedades/propiedades.router';
+import { cotizacionesRouter } from './modules/cotizaciones/cotizaciones.router';
+import { serviciosRouter } from './modules/servicios/servicios.router';
 
 dotenv.config({ path: path.resolve(process.cwd(), '../../.env') });
 
@@ -36,6 +40,7 @@ app.use(
 app.use(morgan('combined'));
 app.use(express.json({ limit: '10mb' }));
 app.use(express.urlencoded({ extended: true }));
+app.use(cookieParser());
 
 // ─── Rutas ────────────────────────────────────────────────────────────────────
 
@@ -48,6 +53,9 @@ app.use('/api/v1/users', usersRouter);
 app.use('/api/v1/jornadas', jornadasRouter);
 app.use('/api/v1/pqr', pqrRouter);
 app.use('/api/v1/conjuntos', conjuntosRouter);
+app.use('/api/v1/propiedades', propiedadesRouter);
+app.use('/api/v1/cotizaciones', cotizacionesRouter);
+app.use('/api/v1/servicios', serviciosRouter);
 
 // ─── Error Handler ────────────────────────────────────────────────────────────
 

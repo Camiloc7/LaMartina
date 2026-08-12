@@ -10,6 +10,7 @@ import {
 } from 'typeorm';
 import { User } from './User';
 import { PQR } from './PQR';
+import { Propiedad } from './Propiedad';
 
 @Entity('conjuntos')
 export class Conjunto {
@@ -51,6 +52,9 @@ export class Conjunto {
 
   @OneToMany(() => PQR, (pqr) => pqr.conjunto)
   pqrs?: PQR[];
+
+  @OneToMany(() => Propiedad, (propiedad) => propiedad.conjunto)
+  propiedades?: Propiedad[];
 
   @Column({ default: true })
   activo!: boolean;

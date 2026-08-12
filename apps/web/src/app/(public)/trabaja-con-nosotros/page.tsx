@@ -83,7 +83,7 @@ export default function TrabajaConNosotrosPage() {
         </div>
 
         {/* Derecha: Formulario de Postulación */}
-        <div className="bg-white rounded-3xl shadow-xl border border-slate-100 overflow-hidden relative self-start sticky top-28">
+        <div className="bg-white rounded-3xl shadow-xl border border-slate-100 overflow-hidden self-start sticky top-28">
           <div className="absolute top-0 w-full h-2 bg-gradient-to-r from-brand-400 to-brand-600" />
           <div className="p-8 md:p-12">
             <h2 className="text-2xl font-bold mb-2 text-slate-900">Formulario de Postulación</h2>
