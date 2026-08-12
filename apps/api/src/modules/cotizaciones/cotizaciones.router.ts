@@ -1,5 +1,5 @@
 import { Router } from 'express';
-import { crear, getAll, getById, aprobarYProgramar, registrarPago, getResumenFinanciero } from './cotizaciones.controller';
+import { crear, getAll, getById, aprobarYProgramar, registrarPago, getResumenFinanciero, descargarPDF } from './cotizaciones.controller';
 import { authenticate, authorize } from '../../middleware/authenticate';
 
 export const cotizacionesRouter: Router = Router();
@@ -14,6 +14,9 @@ cotizacionesRouter.get('/', authorize('SUPER_ADMIN', 'ADMIN'), getAll);
 
 // Obtener por ID
 cotizacionesRouter.get('/:id', authorize('SUPER_ADMIN', 'ADMIN'), getById);
+
+// Descargar PDF
+cotizacionesRouter.get('/:id/pdf', authorize('SUPER_ADMIN', 'ADMIN'), descargarPDF);
 
 // Crear cotizacion (solo SUPER_ADMIN)
 cotizacionesRouter.post('/', authorize('SUPER_ADMIN'), crear);

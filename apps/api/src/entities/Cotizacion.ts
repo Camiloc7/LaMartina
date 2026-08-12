@@ -19,6 +19,9 @@ export class Cotizacion {
   @PrimaryGeneratedColumn('uuid')
   id!: string;
 
+  @Column({ type: 'int', generated: 'increment' })
+  numeroSecuencial!: number;
+
   @ManyToOne(() => Conjunto)
   @JoinColumn({ name: 'conjunto_id' })
   conjunto!: Conjunto;
@@ -38,6 +41,9 @@ export class Cotizacion {
 
   @Column({ type: 'decimal', precision: 12, scale: 2 })
   precioTotal!: number;
+
+  @Column({ type: 'int', nullable: true })
+  cantidadCasas?: number;
 
   @Column({
     type: 'enum',

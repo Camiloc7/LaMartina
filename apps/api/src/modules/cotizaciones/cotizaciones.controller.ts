@@ -1,14 +1,16 @@
 import { Request, Response } from 'express';
 import { CotizacionesService } from './cotizaciones.service';
+import { PdfCotizacionesService } from './pdf-cotizacion.service';
 
 export const crear = async (req: Request, res: Response) => {
-  const { conjuntoId, propiedadId, detalles, precioTotal, notasFinancieras } = req.body;
+  const { conjuntoId, propiedadId, detalles, precioTotal, notasFinancieras, cantidadCasas } = req.body;
   const cotizacion = await CotizacionesService.crear({
     conjuntoId,
     propiedadId,
     detalles,
     precioTotal,
     notasFinancieras,
+    cantidadCasas: cantidadCasas ? parseInt(cantidadCasas, 10) : undefined,
   });
 
   res.status(201).json({ success: true, data: cotizacion });
@@ -25,11 +27,26 @@ export const getAll = async (req: Request, res: Response) => {
 
 export const getById = async (req: Request, res: Response) => {
   const { id } = req.params;
-  const cotizacion = await CotizacionesService.obtenerPorId(id);
+  const cotizacion = await CotizacionesService.obtenerPorId(id as string);
   if (!cotizacion) {
     return res.status(404).json({ success: false, error: 'Cotización no encontrada' });
   }
   res.json({ success: true, data: cotizacion });
+};
+
+export const descargarPDF = async (req: Request, res: Response) => {
+  const { id } = req.params;
+  const cotizacion = await CotizacionesService.obtenerPorId(id as string);
+  if (!cotizacion) {
+    return res.status(404).json({ success: false, error: 'Cotización no encontrada' });
+  }
+
+  const filename = `Cotizacion_${String(cotizacion.numeroSecuencial || 0).padStart(6, '0')}.pdf`;
+
+  res.setHeader('Content-Type', 'application/pdf');
+  res.setHeader('Content-Disposition', `attachment; filename="${filename}"`);
+
+  await PdfCotizacionesService.generarPdfCotizacion(cotizacion, res);
 };
 
 export const aprobarYProgramar = async (req: Request, res: Response) => {
@@ -41,7 +58,7 @@ export const aprobarYProgramar = async (req: Request, res: Response) => {
   }
 
   try {
-    const result = await CotizacionesService.aprobarYProgramar(id, new Date(fechaProgramada));
+    const result = await CotizacionesService.aprobarYProgramar(id as string, new Date(fechaProgramada));
     res.json({ success: true, data: result });
   } catch (error: any) {
     res.status(400).json({ success: false, error: error.message });
@@ -57,7 +74,7 @@ export const registrarPago = async (req: Request, res: Response) => {
   }
 
   try {
-    const result = await CotizacionesService.registrarPago(id, { monto, fecha, notas });
+    const result = await CotizacionesService.registrarPago(id as string, { monto, fecha, notas });
     res.json({ success: true, data: result });
   } catch (error: any) {
     res.status(400).json({ success: false, error: error.message });

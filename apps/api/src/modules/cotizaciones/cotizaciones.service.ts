@@ -11,6 +11,7 @@ export const CotizacionesService = {
     propiedadId?: string;
     detalles: any;
     precioTotal: number;
+    cantidadCasas?: number;
     notasFinancieras?: string;
   }): Promise<Cotizacion> {
     const nuevaCotizacion = cotizacionRepo.create({

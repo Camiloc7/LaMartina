@@ -145,7 +145,12 @@ export default function ConjuntosPage() {
                 <div className="w-14 h-14 bg-brand-50 rounded-2xl flex items-center justify-center border border-brand-100 group-hover:bg-brand-500 group-hover:text-white transition-colors duration-300">
                   <Home size={28} className="text-brand-500 group-hover:text-white transition-colors" />
                 </div>
-                <div className="flex gap-2">
+                <div className="flex gap-2 items-center">
+                  {c.ordenesActivasCount > 0 && (
+                    <div className="bg-amber-100 text-amber-700 text-xs font-bold px-3 py-1 rounded-full flex items-center gap-1 shadow-sm border border-amber-200 animate-pulse">
+                      <span>🔥</span> {c.ordenesActivasCount} Pendientes
+                    </div>
+                  )}
                   <Link href={`/admin/conjuntos/${c.id}`} className="p-2 text-slate-400 hover:text-brand-500 hover:bg-brand-50 rounded-full transition-colors opacity-0 group-hover:opacity-100">
                     <ArrowRight size={18} />
                   </Link>

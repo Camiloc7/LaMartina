@@ -2,7 +2,7 @@
 
 import { useState, useEffect, use } from 'react';
 import { fetchApi } from '@/lib/api';
-import { Building2, Home, FileText, QrCode, ArrowLeft, Plus, X, Trash2, History, Layers, Edit2, CheckSquare } from 'lucide-react';
+import { Building2, Home, FileText, QrCode, ArrowLeft, Plus, X, Trash2, History, Layers, Edit2, CheckSquare, Download } from 'lucide-react';
 import Link from 'next/link';
 import { QRCodeSVG } from 'qrcode.react';
 
@@ -10,7 +10,7 @@ export default function ConjuntoDashboardPage({ params }: { params: Promise<{ id
   const { id } = use(params);
   const [conjunto, setConjunto] = useState<any>(null);
   const [loading, setLoading] = useState(true);
-  const [activeTab, setActiveTab] = useState<'resumen' | 'propiedades' | 'cotizaciones'>('propiedades');
+  const [activeTab, setActiveTab] = useState<'resumen' | 'propiedades' | 'cotizaciones' | 'ordenes'>('propiedades');
 
   // State for propiedades tab
   const [propiedades, setPropiedades] = useState<any[]>([]);
@@ -46,6 +46,14 @@ export default function ConjuntoDashboardPage({ params }: { params: Promise<{ id
   const [isCotizacionModalOpen, setIsCotizacionModalOpen] = useState(false);
   const [precioTotal, setPrecioTotal] = useState('');
   const [detallesCotizacion, setDetallesCotizacion] = useState('');
+  const [cantidadCasasCotizacion, setCantidadCasasCotizacion] = useState('');
+
+  // State for ordenes tab
+  const [ordenesTrabajo, setOrdenesTrabajo] = useState<any[]>([]);
+
+  // State for aprobar cotización
+  const [aprobarCotizacionId, setAprobarCotizacionId] = useState<string | null>(null);
+  const [fechaProgramada, setFechaProgramada] = useState('');
 
   useEffect(() => {
     loadData();
@@ -68,10 +76,49 @@ export default function ConjuntoDashboardPage({ params }: { params: Promise<{ id
       if (resCot.success) {
         setCotizaciones(resCot.data || []);
       }
+
+      const resOrd = await fetchApi(`/servicios/programaciones?conjuntoId=${id}`);
+      if (resOrd.success) {
+        setOrdenesTrabajo(resOrd.data || []);
+      }
     } catch (err) {
       console.error(err);
     } finally {
       setLoading(false);
+    }
+  };
+
+  const handleDescargarPDF = async (cotizacionId: string, numeroSecuencial: number | undefined, e: React.MouseEvent) => {
+    e.stopPropagation();
+    try {
+      const apiUrl = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3001/api/v1';
+      
+      const response = await fetch(`${apiUrl}/cotizaciones/${cotizacionId}/pdf`, {
+        method: 'GET',
+        // Esto asume que el token viaja en cookie; si viaja en header Authorization:
+        // headers: { 'Authorization': `Bearer ${token}` }
+        credentials: 'include' 
+      });
+
+      if (!response.ok) {
+        throw new Error('Error al generar PDF');
+      }
+
+      const blob = await response.blob();
+      
+      const filename = `Cotizacion_${String(numeroSecuencial || 0).padStart(6, '0')}.pdf`;
+
+      const url = window.URL.createObjectURL(blob);
+      const link = document.createElement('a');
+      link.href = url;
+      link.setAttribute('download', filename);
+      document.body.appendChild(link);
+      link.click();
+      link.parentNode?.removeChild(link);
+      window.URL.revokeObjectURL(url);
+    } catch (err) {
+      console.error("Error al descargar PDF:", err);
+      alert('Error descargando el PDF, revisa la consola.');
     }
   };
 
@@ -211,21 +258,47 @@ export default function ConjuntoDashboardPage({ params }: { params: Promise<{ id
     e.preventDefault();
     setIsSubmitting(true);
     try {
+      const payload: any = {
+        conjuntoId: id,
+        detalles: { descripcion: detallesCotizacion },
+        precioTotal: parseFloat(precioTotal),
+      };
+      if (cantidadCasasCotizacion.trim() !== '') {
+        payload.cantidadCasas = parseInt(cantidadCasasCotizacion, 10);
+      }
+
       const res = await fetchApi('/cotizaciones', {
         method: 'POST',
-        body: JSON.stringify({
-          conjuntoId: id,
-          precioTotal: parseFloat(precioTotal),
-          detalles: { descripcion: detallesCotizacion },
-        })
+        body: JSON.stringify(payload)
       });
       if (res.success) {
         setIsCotizacionModalOpen(false);
-        setPrecioTotal(''); setDetallesCotizacion('');
+        setPrecioTotal(''); setDetallesCotizacion(''); setCantidadCasasCotizacion('');
         loadData();
       }
     } catch (err: any) {
       alert(err.message || 'Error de conexión');
+    } finally {
+      setIsSubmitting(false);
+    }
+  };
+
+  const handleAprobarCotizacion = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!aprobarCotizacionId || !fechaProgramada) return;
+    setIsSubmitting(true);
+    try {
+      const res = await fetchApi(`/cotizaciones/${aprobarCotizacionId}/aprobar`, {
+        method: 'POST',
+        body: JSON.stringify({ fechaProgramada })
+      });
+      if (res.success) {
+        setAprobarCotizacionId(null);
+        setFechaProgramada('');
+        loadData();
+      }
+    } catch (err: any) {
+      alert(err.message || 'Error al aprobar cotización');
     } finally {
       setIsSubmitting(false);
     }
@@ -265,6 +338,12 @@ export default function ConjuntoDashboardPage({ params }: { params: Promise<{ id
           className={`px-6 py-3 font-medium text-sm flex items-center gap-2 border-b-2 transition-colors ${activeTab === 'cotizaciones' ? 'border-brand-500 text-brand-600' : 'border-transparent text-slate-500 hover:text-slate-700'}`}
         >
           <FileText size={16} /> Cotizaciones
+        </button>
+        <button 
+          onClick={() => setActiveTab('ordenes')}
+          className={`px-6 py-3 font-medium text-sm flex items-center gap-2 border-b-2 transition-colors ${activeTab === 'ordenes' ? 'border-brand-500 text-brand-600' : 'border-transparent text-slate-500 hover:text-slate-700'}`}
+        >
+          <Layers size={16} /> Órdenes de Trabajo
         </button>
       </div>
 
@@ -396,41 +475,148 @@ export default function ConjuntoDashboardPage({ params }: { params: Promise<{ id
         )}
 
         {activeTab === 'cotizaciones' && (
-          <div className="space-y-6">
-            <div className="flex justify-between items-center">
-              <h2 className="text-xl font-bold text-slate-800">Cotizaciones del Conjunto</h2>
-              <button onClick={() => setIsCotizacionModalOpen(true)} className="flex items-center justify-center gap-2 px-4 py-2 bg-brand-600 hover:bg-brand-700 text-white rounded-lg">
-                <Plus size={16} /> Crear Cotización
-              </button>
+          <div className="space-y-12">
+            
+            {/* COTIZACIONES ACTIVAS */}
+            <div>
+              <div className="flex justify-between items-center mb-6">
+                <h2 className="text-xl font-bold text-slate-800">Cotizaciones Activas</h2>
+                <button onClick={() => setIsCotizacionModalOpen(true)} className="flex items-center justify-center gap-2 px-4 py-2 bg-brand-600 hover:bg-brand-700 text-white rounded-lg">
+                  <Plus size={16} /> Crear Cotización
+                </button>
+              </div>
+
+              {cotizaciones.filter(c => c.estado !== 'APROBADA' && c.estado !== 'RECHAZADA').length === 0 ? (
+                <div className="text-center py-12 bg-white rounded-2xl border border-dashed border-slate-300">
+                  <FileText className="w-12 h-12 text-slate-300 mx-auto mb-4" />
+                  <p className="text-slate-500">No hay cotizaciones en negociación actualmente.</p>
+                </div>
+              ) : (
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  {cotizaciones.filter(c => c.estado !== 'APROBADA' && c.estado !== 'RECHAZADA').map((cot: any) => (
+                    <div key={cot.id} className="bg-white p-5 rounded-2xl border border-slate-200 shadow-sm relative overflow-hidden">
+                      <div className="flex justify-between items-start mb-2">
+                        <h3 className="font-bold text-lg text-slate-900">
+                          Cotización #{cot.numeroSecuencial ? String(cot.numeroSecuencial).padStart(6, '0') : cot.id.substring(0, 8)}
+                        </h3>
+                        <span className="text-xs font-bold px-2.5 py-1 rounded-full bg-amber-100 text-amber-700">
+                          {cot.estado}
+                        </span>
+                      </div>
+                      <p className="text-sm text-slate-600 mb-4">{cot.detalles?.descripcion || 'Sin detalles'}</p>
+                      <div className="flex justify-between items-end border-t border-slate-100 pt-4">
+                        <div>
+                          <p className="text-xs text-slate-400 uppercase tracking-wider mb-1">Total</p>
+                          <p className="font-bold text-lg text-slate-800">${cot.precioTotal?.toLocaleString()}</p>
+                        </div>
+                        <div className="flex items-center gap-2">
+                          <button 
+                            onClick={(e) => handleDescargarPDF(cot.id, cot.numeroSecuencial, e)}
+                            className="px-3 py-1.5 text-sm border border-brand-200 rounded-md text-brand-600 hover:bg-brand-50 transition-colors flex items-center gap-1"
+                            title="Descargar PDF"
+                          >
+                            <Download size={14} /> PDF
+                          </button>
+                          <button 
+                            onClick={() => setAprobarCotizacionId(cot.id)}
+                            className="px-3 py-1.5 text-sm font-bold border border-emerald-200 bg-emerald-50 rounded-md text-emerald-600 hover:bg-emerald-100 hover:border-emerald-300 transition-colors"
+                          >
+                            Aprobar
+                          </button>
+                        </div>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              )}
             </div>
 
-            {cotizaciones.length === 0 ? (
+            {/* ARCHIVO HISTÓRICO */}
+            {cotizaciones.filter(c => c.estado === 'APROBADA' || c.estado === 'RECHAZADA').length > 0 && (
+              <div>
+                <h2 className="text-xl font-bold text-slate-800 mb-6 flex items-center gap-2">
+                  <History size={20} className="text-slate-400" /> Archivo Histórico
+                </h2>
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4 opacity-75 hover:opacity-100 transition-opacity duration-300">
+                  {cotizaciones.filter(c => c.estado === 'APROBADA' || c.estado === 'RECHAZADA').map((cot: any) => (
+                    <div key={cot.id} className="bg-slate-50 p-5 rounded-2xl border border-slate-200">
+                      <div className="flex justify-between items-start mb-2">
+                        <h3 className="font-bold text-lg text-slate-700">
+                          Cotización #{cot.numeroSecuencial ? String(cot.numeroSecuencial).padStart(6, '0') : cot.id.substring(0, 8)}
+                        </h3>
+                        <span className={`text-xs font-bold px-2.5 py-1 rounded-full ${cot.estado === 'APROBADA' ? 'bg-emerald-100 text-emerald-700' : 'bg-red-100 text-red-700'}`}>
+                          {cot.estado}
+                        </span>
+                      </div>
+                      <p className="text-sm text-slate-500 mb-4 line-clamp-2">{cot.detalles?.descripcion || 'Sin detalles'}</p>
+                      <div className="flex justify-between items-end border-t border-slate-200 pt-4">
+                        <div>
+                          <p className="font-bold text-slate-600">${cot.precioTotal?.toLocaleString()}</p>
+                        </div>
+                        <button 
+                          onClick={(e) => handleDescargarPDF(cot.id, cot.numeroSecuencial, e)}
+                          className="px-3 py-1.5 text-xs font-medium border border-slate-300 rounded-md text-slate-600 hover:bg-white transition-colors flex items-center gap-1"
+                        >
+                          <Download size={14} /> PDF
+                        </button>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            )}
+          </div>
+        )}
+
+        {activeTab === 'ordenes' && (
+          <div className="space-y-6">
+            <div className="flex justify-between items-center mb-6">
+              <h2 className="text-xl font-bold text-slate-800">Órdenes de Trabajo</h2>
+            </div>
+
+            {ordenesTrabajo.length === 0 ? (
               <div className="text-center py-12 bg-white rounded-2xl border border-dashed border-slate-300">
-                <FileText className="w-12 h-12 text-slate-300 mx-auto mb-4" />
-                <p className="text-slate-500">No hay cotizaciones registradas para este conjunto.</p>
+                <Layers className="w-12 h-12 text-slate-300 mx-auto mb-4" />
+                <p className="text-slate-500">No hay órdenes de trabajo activas o pendientes para este conjunto.</p>
               </div>
             ) : (
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                {cotizaciones.map((cot: any) => (
-                  <div key={cot.id} className="bg-white p-5 rounded-2xl border border-slate-200 shadow-sm">
-                    <div className="flex justify-between items-start mb-2">
-                      <h3 className="font-bold text-lg text-slate-900">Cotización #{cot.id.substring(0, 8)}</h3>
-                      <span className={`text-xs font-medium px-2 py-1 rounded ${cot.estado === 'APROBADA' ? 'bg-emerald-100 text-emerald-700' : 'bg-slate-100 text-slate-600'}`}>
-                        {cot.estado}
-                      </span>
-                    </div>
-                    <p className="text-sm text-slate-600 mb-4">{cot.detalles?.descripcion || 'Sin detalles'}</p>
-                    <div className="flex justify-between items-end border-t border-slate-100 pt-4">
-                      <div>
-                        <p className="text-xs text-slate-400 uppercase tracking-wider mb-1">Total</p>
-                        <p className="font-bold text-lg text-slate-800">${cot.precioTotal?.toLocaleString()}</p>
+              <div className="grid grid-cols-1 gap-4">
+                {ordenesTrabajo.map((orden: any) => (
+                  <div key={orden.id} className="bg-white p-6 rounded-2xl border border-slate-200 shadow-sm flex flex-col md:flex-row gap-6 items-start md:items-center justify-between hover:shadow-md transition-shadow">
+                    
+                    <div className="flex-1 space-y-2">
+                      <div className="flex items-center gap-3">
+                        <span className={`px-3 py-1 rounded-full text-xs font-bold uppercase tracking-wider
+                          ${orden.estado === 'PENDIENTE' ? 'bg-amber-100 text-amber-700 border border-amber-200' : ''}
+                          ${orden.estado === 'EN_PROGRESO' ? 'bg-brand-100 text-brand-700 border border-brand-200' : ''}
+                          ${orden.estado === 'COMPLETADO' ? 'bg-emerald-100 text-emerald-700 border border-emerald-200' : ''}
+                          ${orden.estado === 'CANCELADO' ? 'bg-red-100 text-red-700 border border-red-200' : ''}
+                        `}>
+                          {orden.estado.replace('_', ' ')}
+                        </span>
+                        <span className="text-sm font-semibold text-slate-400">
+                          Orden #{orden.id.substring(0, 8)}
+                        </span>
                       </div>
-                      {cot.estado !== 'APROBADA' && (
-                        <button className="px-3 py-1.5 text-sm border border-brand-200 rounded-md text-brand-600 hover:bg-brand-50 transition-colors">
-                          Aprobar
-                        </button>
-                      )}
+                      
+                      <h3 className="text-lg font-bold text-slate-900">{orden.tipoServicio}</h3>
+                      <p className="text-slate-600 text-sm line-clamp-2">{orden.descripcion}</p>
                     </div>
+
+                    <div className="flex flex-col md:items-end gap-1 min-w-[200px] border-t md:border-t-0 md:border-l border-slate-100 pt-4 md:pt-0 md:pl-6 w-full md:w-auto">
+                      <p className="text-xs font-semibold text-slate-400 uppercase tracking-wider">Fecha de Inicio</p>
+                      <p className="text-sm font-bold text-slate-800">
+                        {new Date(orden.fechaProgramada).toLocaleDateString('es-CO', {
+                          weekday: 'long', year: 'numeric', month: 'long', day: 'numeric'
+                        })}
+                      </p>
+                      <p className="text-xs text-brand-600 font-bold mt-1">
+                        {new Date(orden.fechaProgramada).toLocaleTimeString('es-CO', {
+                          hour: '2-digit', minute: '2-digit'
+                        })}
+                      </p>
+                    </div>
+
                   </div>
                 ))}
               </div>
@@ -559,8 +745,8 @@ export default function ConjuntoDashboardPage({ params }: { params: Promise<{ id
                     required 
                     rows={3}
                     placeholder="Ej: Mantenimiento trimestral de todas las áreas comunes..." 
-                    value={cotDescripcion} 
-                    onChange={(e) => setCotDescripcion(e.target.value)} 
+                    value={detallesCotizacion} 
+                    onChange={(e) => setDetallesCotizacion(e.target.value)} 
                     className="w-full p-3 rounded-xl border border-slate-200 bg-white text-sm text-slate-900 outline-none focus:ring-2 focus:ring-brand-500 resize-none"
                   ></textarea>
                 </div>
@@ -572,8 +758,19 @@ export default function ConjuntoDashboardPage({ params }: { params: Promise<{ id
                     type="number" 
                     step="0.01" 
                     placeholder="0.00" 
-                    value={cotPrecio} 
-                    onChange={(e) => setCotPrecio(e.target.value)} 
+                    value={precioTotal} 
+                    onChange={(e) => setPrecioTotal(e.target.value)} 
+                    className="w-full h-10 px-3 rounded-xl border border-slate-200 bg-white text-sm text-slate-900 outline-none focus:ring-2 focus:ring-brand-500"
+                  />
+                </div>
+                
+                <div>
+                  <label className="block text-sm font-semibold text-slate-700 mb-1.5">Cantidad de Casas a Cotizar (Opcional)</label>
+                  <input 
+                    type="number" 
+                    placeholder="Dejar en blanco para autocalcular" 
+                    value={cantidadCasasCotizacion} 
+                    onChange={(e) => setCantidadCasasCotizacion(e.target.value)} 
                     className="w-full h-10 px-3 rounded-xl border border-slate-200 bg-white text-sm text-slate-900 outline-none focus:ring-2 focus:ring-brand-500"
                   />
                 </div>
@@ -807,6 +1004,54 @@ export default function ConjuntoDashboardPage({ params }: { params: Promise<{ id
                   className="flex-1 px-4 py-2 bg-brand-600 hover:bg-brand-700 text-white rounded-xl disabled:opacity-50 transition-colors"
                 >
                   {isSubmitting ? 'Aplicando...' : 'Aplicar a Todas'}
+                </button>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
+
+      {aprobarCotizacionId && (
+        <div className="fixed inset-0 bg-slate-900/40 backdrop-blur-sm z-50 flex items-center justify-center p-4 animate-in fade-in duration-200">
+          <div className="bg-white rounded-3xl w-full max-w-md shadow-2xl overflow-hidden animate-in zoom-in-95 duration-300">
+            <div className="px-6 py-4 border-b border-slate-100 flex justify-between items-center bg-slate-50/50">
+              <h3 className="font-bold text-lg text-slate-800">Aprobar y Programar</h3>
+              <button onClick={() => setAprobarCotizacionId(null)} className="p-2 text-slate-400 hover:text-slate-600 hover:bg-slate-100 rounded-full transition-colors">
+                <X size={20} />
+              </button>
+            </div>
+            
+            <form onSubmit={handleAprobarCotizacion} className="p-6">
+              <p className="text-sm text-slate-600 mb-4">
+                Al aprobar esta cotización, se generará automáticamente una <strong>Orden de Trabajo</strong> para los técnicos. Por favor indica cuándo iniciarán los trabajos.
+              </p>
+              <div className="space-y-4">
+                <div>
+                  <label className="block text-sm font-semibold text-slate-700 mb-1.5">Fecha Programada de Inicio</label>
+                  <input 
+                    required 
+                    type="datetime-local" 
+                    value={fechaProgramada} 
+                    onChange={(e) => setFechaProgramada(e.target.value)} 
+                    className="w-full h-10 px-3 rounded-xl border border-slate-200 bg-white text-sm text-slate-900 outline-none focus:ring-2 focus:ring-brand-500"
+                  />
+                </div>
+              </div>
+              
+              <div className="mt-8 flex gap-3">
+                <button 
+                  type="button" 
+                  className="flex-1 px-4 py-2.5 border border-slate-200 text-slate-700 font-semibold rounded-xl hover:bg-slate-50 transition-colors"
+                  onClick={() => setAprobarCotizacionId(null)}
+                >
+                  Cancelar
+                </button>
+                <button 
+                  type="submit" 
+                  disabled={isSubmitting} 
+                  className="flex-1 px-4 py-2.5 bg-emerald-600 hover:bg-emerald-700 text-white font-bold rounded-xl transition-colors disabled:opacity-50"
+                >
+                  {isSubmitting ? 'Aprobando...' : 'Confirmar Aprobación'}
                 </button>
               </div>
             </form>

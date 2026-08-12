@@ -6,8 +6,24 @@ import { ApiError } from '../../middleware/errorHandler';
 const conjuntoRepo = AppDataSource.getRepository(Conjunto);
 
 export async function getAll(_req: Request, res: Response): Promise<void> {
-  const conjuntos = await conjuntoRepo.find({ where: { activo: true } });
-  res.json({ success: true, data: conjuntos });
+  const conjuntos = await conjuntoRepo.find({ where: { activo: true }, order: { createdAt: 'DESC' } });
+  
+  const countQuery = await AppDataSource.getRepository('ProgramacionServicio')
+    .createQueryBuilder('p')
+    .select('p.conjunto_id', 'conjuntoId')
+    .addSelect('COUNT(*)', 'count')
+    .where('p.estado IN (:...estados)', { estados: ['PENDIENTE', 'EN_PROGRESO'] })
+    .groupBy('p.conjunto_id')
+    .getRawMany();
+
+  const countMap = new Map(countQuery.map(row => [row.conjuntoId, parseInt(row.count, 10)]));
+
+  const result = conjuntos.map(c => ({
+    ...c,
+    ordenesActivasCount: countMap.get(c.id) || 0
+  }));
+
+  res.json({ success: true, data: result });
 }
 
 export async function getById(req: Request, res: Response): Promise<void> {
