@@ -3,9 +3,10 @@
 import { useState, useEffect } from 'react';
 import { useRouter, usePathname } from 'next/navigation';
 import Link from 'next/link';
-import { CalendarClock, User, LogOut, Home, MessageSquareWarning, Wrench, Bell } from 'lucide-react';
+import { CalendarClock, User, LogOut, Home, MessageSquareWarning, Wrench } from 'lucide-react';
 import Image from 'next/image';
 import { fetchApi } from '@/lib/api';
+import NotificationBell from '@/components/NotificationBell';
 
 export default function OperarioLayout({
   children,
@@ -16,6 +17,7 @@ export default function OperarioLayout({
   const pathname = usePathname();
   const [user, setUser] = useState<any>(null);
   const [isLoading, setIsLoading] = useState(true);
+  const [isAuthenticated, setIsAuthenticated] = useState(false);
 
   useEffect(() => {
     const checkAuth = async () => {
@@ -28,13 +30,15 @@ export default function OperarioLayout({
             throw new Error('Unauthorized role');
           }
 
-          setUser(userData);
+          // Opcional: Actualizar localStorage para tenerlo en caché
           localStorage.setItem('user', JSON.stringify(userData));
+          setIsAuthenticated(true);
         } else {
           throw new Error('Not authenticated');
         }
       } catch (error) {
         localStorage.removeItem('user');
+        setIsAuthenticated(false);
         router.push('/login');
       } finally {
         setIsLoading(false);
@@ -54,7 +58,7 @@ export default function OperarioLayout({
     router.push('/login');
   };
 
-  if (isLoading) {
+  if (isLoading || !isAuthenticated) {
     return <div className="min-h-[100dvh] bg-slate-950 flex items-center justify-center text-brand-500">
       <div className="animate-pulse flex flex-col items-center">
         <div className="w-12 h-12 border-4 border-brand-500 border-t-transparent rounded-full animate-spin mb-4"></div>
@@ -91,9 +95,7 @@ export default function OperarioLayout({
             </div>
           </div>
           <div className="flex items-center gap-2">
-            <button className="p-2.5 text-slate-400 hover:text-white transition-colors bg-slate-900/50 rounded-full">
-              <Bell size={18} />
-            </button>
+            <NotificationBell className="relative p-2.5 text-slate-400 hover:text-white transition-colors bg-slate-900/50 rounded-full" />
             <button 
               onClick={handleLogout}
               className="p-2.5 text-red-400 hover:text-red-300 transition-colors bg-slate-900/50 rounded-full"

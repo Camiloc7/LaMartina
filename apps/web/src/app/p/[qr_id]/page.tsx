@@ -19,6 +19,9 @@ export default function QrPortalPage({ params }: { params: Promise<{ qr_id: stri
   const [loadingHistorial, setLoadingHistorial] = useState(false);
   const [config, setConfig] = useState<any>(null);
 
+  const [isContactModalOpen, setIsContactModalOpen] = useState(false);
+  const [contactModalType, setContactModalType] = useState<'pqr' | 'service'>('pqr');
+
   const handleAuth = async (e: React.FormEvent) => {
     e.preventDefault();
     if (pin.length !== 4) {
@@ -135,18 +138,29 @@ export default function QrPortalPage({ params }: { params: Promise<{ qr_id: stri
   // Vista Autenticada (Dashboard de la Propiedad)
   return (
     <div className="flex flex-col flex-1 animate-in slide-in-from-bottom-4 fade-in duration-500">
-      <div className="bg-emerald-50 p-6 rounded-2xl border border-emerald-100 mb-6 flex items-start space-x-4 shadow-sm">
-        <div className="p-3 bg-emerald-600 rounded-xl text-white">
+      {/* Header Corporativo para Identidad Visual */}
+      <div className="flex items-center justify-center mb-8">
+        <Image 
+          src="/logo.png" 
+          alt="La Martina Logo" 
+          width={80} 
+          height={80} 
+          className="rounded-xl shadow-md shadow-slate-200/50" 
+        />
+      </div>
+
+      <div className="bg-brand-50 p-6 rounded-2xl border border-brand-100 mb-6 flex items-start space-x-4 shadow-sm">
+        <div className="p-3 bg-brand-600 rounded-xl text-white">
           <Home className="w-6 h-6" />
         </div>
         <div>
           <h2 className="text-2xl font-bold text-gray-900">{propiedad?.numero}</h2>
-          <p className="text-emerald-700 font-medium">{propiedad?.conjunto?.nombre}</p>
+          <p className="text-brand-700 font-medium">{propiedad?.conjunto?.nombre}</p>
           <div className="flex space-x-3 mt-2 text-xs text-gray-500">
-            <span className="bg-white px-2 py-1 rounded-md shadow-sm border border-emerald-100">
+            <span className="bg-white px-2 py-1 rounded-md shadow-sm border border-brand-100">
               {propiedad?.extension} m²
             </span>
-            <span className="bg-white px-2 py-1 rounded-md shadow-sm border border-emerald-100">
+            <span className="bg-white px-2 py-1 rounded-md shadow-sm border border-brand-100">
               Nivel: {propiedad?.complejidad}
             </span>
           </div>
@@ -158,14 +172,14 @@ export default function QrPortalPage({ params }: { params: Promise<{ qr_id: stri
         {/* Historial de últimos 2 trabajos */}
         <div className="mb-6 space-y-3">
           {loadingHistorial ? (
-            <div className="text-center p-4"><Loader2 className="w-5 h-5 animate-spin mx-auto text-emerald-500" /></div>
+            <div className="text-center p-4"><Loader2 className="w-5 h-5 animate-spin mx-auto text-brand-500" /></div>
           ) : historial.length === 0 ? (
             <div className="bg-white border border-gray-100 p-4 rounded-xl text-center text-sm text-gray-500 shadow-sm">
               No hay servicios registrados aún.
             </div>
           ) : (
             historial.map((trabajo: any) => (
-              <div key={trabajo.id} className="w-full bg-white border border-gray-200 p-4 rounded-2xl flex items-center justify-between hover:border-emerald-300 hover:shadow-md transition-all group text-left">
+              <div key={trabajo.id} className="w-full bg-white border border-gray-200 p-4 rounded-2xl flex items-center justify-between hover:border-brand-300 hover:shadow-md transition-all group text-left">
                 <div className="flex flex-col md:flex-row items-start md:items-center justify-between w-full">
                   <div className="flex items-center space-x-4 mb-4 md:mb-0">
                     <div className="w-12 h-12 bg-orange-50 rounded-full flex items-center justify-center group-hover:bg-orange-100 transition-colors">
@@ -185,7 +199,10 @@ export default function QrPortalPage({ params }: { params: Promise<{ qr_id: stri
           )}
         </div>
 
-        <button className="w-full bg-white border border-gray-200 p-4 rounded-2xl flex items-center justify-between hover:border-amber-300 hover:shadow-md transition-all group text-left">
+        <button 
+          onClick={() => { setContactModalType('pqr'); setIsContactModalOpen(true); }}
+          className="w-full bg-white border border-gray-200 p-4 rounded-2xl flex items-center justify-between hover:border-brand-300 hover:shadow-md transition-all group text-left"
+        >
           <div className="flex items-center space-x-4">
             <div className="w-12 h-12 bg-amber-50 rounded-full flex items-center justify-center group-hover:bg-amber-100 transition-colors">
               <MessageSquare className="w-6 h-6 text-amber-600" />
@@ -197,12 +214,61 @@ export default function QrPortalPage({ params }: { params: Promise<{ qr_id: stri
           </div>
         </button>
 
-        <button className="w-full bg-emerald-600 p-4 rounded-2xl flex items-center justify-center hover:bg-emerald-700 transition-all text-white shadow-lg mt-8 active:scale-95">
+        <button 
+          onClick={() => { setContactModalType('service'); setIsContactModalOpen(true); }}
+          className="w-full bg-brand-600 p-4 rounded-2xl flex items-center justify-center hover:bg-brand-700 transition-all text-white shadow-lg mt-8 active:scale-95"
+        >
           <span className="font-bold text-lg">Solicitar Servicio Adicional</span>
         </button>
         
         <ContactFooter />
       </div>
+
+      {isContactModalOpen && (
+        <div className="fixed inset-0 bg-slate-900/50 backdrop-blur-sm z-50 flex items-center justify-center p-4 animate-in fade-in duration-200">
+          <div className="bg-white rounded-3xl w-full max-w-sm shadow-2xl overflow-hidden p-6 text-center animate-in zoom-in-95 duration-300">
+            <div className="w-16 h-16 bg-brand-100 rounded-full flex items-center justify-center mx-auto mb-4">
+              <MessageSquare className="w-8 h-8 text-brand-600" />
+            </div>
+            <h3 className="text-xl font-bold text-slate-900 mb-2">
+              {contactModalType === 'pqr' ? 'Atención al Cliente' : 'Nuevos Servicios'}
+            </h3>
+            <p className="text-sm text-slate-500 mb-6">
+              {contactModalType === 'pqr' 
+                ? 'Para brindar una respuesta ágil a tu solicitud, comunícate directamente con nuestra línea de atención.'
+                : 'Estamos listos para ayudarte. Solicita una cotización rápida escribiéndonos por WhatsApp o correo.'}
+            </p>
+            
+            <div className="space-y-3 mb-6">
+              {config?.telefonoContacto && (
+                <a 
+                  href={`https://wa.me/${config.telefonoContacto.replace(/\D/g, '')}`} 
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="w-full flex items-center justify-center gap-2 bg-[#25D366] hover:bg-[#20bd5a] text-white py-3 rounded-xl font-bold transition-colors"
+                >
+                  Contactar por WhatsApp
+                </a>
+              )}
+              {config?.correoContacto && (
+                <a 
+                  href={`mailto:${config.correoContacto}`} 
+                  className="w-full flex items-center justify-center gap-2 bg-slate-100 hover:bg-slate-200 text-slate-700 py-3 rounded-xl font-bold transition-colors"
+                >
+                  Enviar Correo
+                </a>
+              )}
+            </div>
+            
+            <button 
+              onClick={() => setIsContactModalOpen(false)}
+              className="w-full text-slate-400 hover:text-slate-600 text-sm font-semibold"
+            >
+              Cerrar
+            </button>
+          </div>
+        </div>
+      )}
     </div>
   );
 }

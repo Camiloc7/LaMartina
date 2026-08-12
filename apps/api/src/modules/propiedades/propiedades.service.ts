@@ -46,7 +46,7 @@ export const PropiedadesService = {
     for (let i = 1; i <= data.cantidad; i++) {
       propiedades.push(
         propiedadRepo.create({
-          numero: `${data.prefijo}${i}`,
+          numero: `${data.prefijo.trim()} ${i}`,
           extension: data.extension,
           complejidad: data.complejidad,
           conjuntoId: data.conjuntoId,
@@ -100,6 +100,17 @@ export const PropiedadesService = {
 
   async desactivar(id: string): Promise<void> {
     await propiedadRepo.update(id, { activo: false });
+  },
+
+  async actualizar(id: string, data: Partial<Propiedad>): Promise<Propiedad | null> {
+    await propiedadRepo.update(id, data);
+    return await this.obtenerPorId(id);
+  },
+
+  async actualizarMasivo(ids: string[], data: Partial<Propiedad>): Promise<void> {
+    if (ids.length > 0) {
+      await propiedadRepo.update(ids, data);
+    }
   },
 
   async obtenerHistorial(id: string, limit?: number): Promise<OrdenTrabajo[]> {

@@ -7,9 +7,11 @@ import morgan from 'morgan';
 import dotenv from 'dotenv';
 import path from 'path';
 import cookieParser from 'cookie-parser';
+import { createServer } from 'http';
 
 import { AppDataSource } from './config/database';
 import { errorHandler } from './middleware/errorHandler';
+import { socketService } from './services/socket.service';
 
 // Rutas de módulos
 import { authRouter } from './modules/auth/auth.router';
@@ -70,7 +72,11 @@ async function bootstrap() {
     await AppDataSource.initialize();
     console.log('✅ Conexión a PostgreSQL establecida');
 
-    app.listen(PORT, () => {
+    const server = createServer(app);
+    socketService.initialize(server);
+    console.log('🔌 Socket.io inicializado');
+
+    server.listen(PORT, () => {
       console.log(`🚀 La Martina API corriendo en http://localhost:${PORT}`);
       console.log(`📋 Health check: http://localhost:${PORT}/health`);
     });

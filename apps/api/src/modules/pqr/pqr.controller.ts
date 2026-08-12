@@ -3,6 +3,7 @@ import { AppDataSource } from '../../config/database';
 import { PQR } from '../../entities/PQR';
 import { ApiError } from '../../middleware/errorHandler';
 import { AuthRequest } from '../../middleware/authenticate';
+import { socketService } from '../../services/socket.service';
 
 const pqrRepo = AppDataSource.getRepository(PQR);
 
@@ -35,6 +36,9 @@ export async function crearPQR(req: Request, res: Response): Promise<void> {
 
   await pqrRepo.save(pqr);
 
+  // Emitir evento por WebSockets
+  socketService.emitToAll('nueva_pqr', pqr);
+
   res.status(201).json({
     success: true,
     message: `PQR radicada exitosamente. Número de radicado: ${pqr.radicado}`,
@@ -64,6 +68,9 @@ export async function crearPQRPublica(req: Request, res: Response): Promise<void
   });
 
   await pqrRepo.save(pqr);
+
+  // Emitir evento por WebSockets
+  socketService.emitToAll('nueva_pqr', pqr);
 
   res.status(201).json({
     success: true,

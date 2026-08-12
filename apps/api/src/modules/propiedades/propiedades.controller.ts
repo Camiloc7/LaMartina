@@ -50,6 +50,32 @@ export const getById = async (req: Request, res: Response) => {
   res.json({ success: true, data: propiedad });
 };
 
+export const update = async (req: Request, res: Response) => {
+  const { id } = req.params;
+  const { numero, extension, complejidad } = req.body;
+  
+  const propiedad = await PropiedadesService.actualizar(id, { numero, extension, complejidad });
+  if (!propiedad) {
+    return res.status(404).json({ success: false, error: 'Propiedad no encontrada' });
+  }
+  res.json({ success: true, data: propiedad });
+};
+
+export const updateMasivo = async (req: Request, res: Response) => {
+  const { ids, extension, complejidad } = req.body;
+  
+  if (!ids || !Array.isArray(ids) || ids.length === 0) {
+    return res.status(400).json({ success: false, error: 'Debe enviar un arreglo de IDs' });
+  }
+
+  const dataToUpdate: any = {};
+  if (extension) dataToUpdate.extension = parseFloat(extension);
+  if (complejidad) dataToUpdate.complejidad = complejidad;
+
+  await PropiedadesService.actualizarMasivo(ids, dataToUpdate);
+  res.json({ success: true, message: 'Propiedades actualizadas correctamente' });
+};
+
 export const desactivar = async (req: Request, res: Response) => {
   const { id } = req.params;
   await PropiedadesService.desactivar(id);

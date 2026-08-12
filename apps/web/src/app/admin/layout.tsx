@@ -6,6 +6,7 @@ import { LayoutDashboard, MessageSquareWarning, CalendarClock, Users, LogOut, Me
 import { useState, useEffect } from 'react';
 import { fetchApi } from '@/lib/api';
 import Image from 'next/image';
+import NotificationBell from '@/components/NotificationBell';
 
 const sidebarLinks = [
   { name: 'Dashboard', href: '/admin/dashboard', icon: LayoutDashboard },
@@ -29,6 +30,7 @@ export default function AdminLayout({
   const [isCollapsed, setIsCollapsed] = useState(false); // For Desktop
   const [user, setUser] = useState<any>(null);
   const [isLoading, setIsLoading] = useState(true);
+  const [isAuthenticated, setIsAuthenticated] = useState(false);
 
   useEffect(() => {
     const checkAuth = async () => {
@@ -44,11 +46,13 @@ export default function AdminLayout({
           setUser(userData);
           // Opcional: Actualizar localStorage para tenerlo en caché
           localStorage.setItem('user', JSON.stringify(userData));
+          setIsAuthenticated(true);
         } else {
           throw new Error('Not authenticated');
         }
       } catch (error) {
         localStorage.removeItem('user');
+        setIsAuthenticated(false);
         router.push('/login');
       } finally {
         setIsLoading(false);
@@ -68,7 +72,7 @@ export default function AdminLayout({
     router.push('/login');
   };
 
-  if (isLoading) {
+  if (isLoading || !isAuthenticated) {
     return <div className="min-h-screen bg-slate-50 flex items-center justify-center">Cargando...</div>;
   }
 

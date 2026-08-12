@@ -2,8 +2,9 @@
 
 import { useState, useEffect, use } from 'react';
 import { fetchApi } from '@/lib/api';
-import { Building2, Home, FileText, QrCode, ArrowLeft, Plus, X, Trash2, History, Layers } from 'lucide-react';
+import { Building2, Home, FileText, QrCode, ArrowLeft, Plus, X, Trash2, History, Layers, Edit2, CheckSquare } from 'lucide-react';
 import Link from 'next/link';
+import { QRCodeSVG } from 'qrcode.react';
 
 export default function ConjuntoDashboardPage({ params }: { params: Promise<{ id: string }> }) {
   const { id } = use(params);
@@ -21,10 +22,24 @@ export default function ConjuntoDashboardPage({ params }: { params: Promise<{ id
   const [extension, setExtension] = useState('');
   const [complejidad, setComplejidad] = useState<'BAJA' | 'MEDIA' | 'ALTA'>('MEDIA');
 
+  // State for Edit Propiedad Modal
+  const [isEditPropiedadModalOpen, setIsEditPropiedadModalOpen] = useState(false);
+  const [propiedadAEditar, setPropiedadAEditar] = useState<any>(null);
+
+  // State for Bulk Edit
+  const [selectedPropiedades, setSelectedPropiedades] = useState<string[]>([]);
+  const [isBulkEditModalOpen, setIsBulkEditModalOpen] = useState(false);
+  const [bulkExtension, setBulkExtension] = useState('');
+  const [bulkComplejidad, setBulkComplejidad] = useState('');
+
   // State for Historial
   const [historialModalOpen, setHistorialModalOpen] = useState(false);
   const [propiedadSeleccionada, setPropiedadSeleccionada] = useState<any>(null);
   const [historialTrabajos, setHistorialTrabajos] = useState<any[]>([]);
+
+  // State for QR Modal
+  const [isQrModalOpen, setIsQrModalOpen] = useState(false);
+  const [qrModalPropiedad, setQrModalPropiedad] = useState<any>(null);
 
   // State for cotizaciones tab
   const [cotizaciones, setCotizaciones] = useState<any[]>([]);
@@ -85,7 +100,7 @@ export default function ConjuntoDashboardPage({ params }: { params: Promise<{ id
       });
       if (res.success) {
         setIsModalOpen(false);
-        setNumero(''); setExtension(''); setComplejidad('MEDIA'); setIsMasivo(false);
+        setNumero(''); setExtension(''); setComplejidad('MEDIA'); setCantidadMasiva('10');
         loadData(); // Recargar propiedades
       }
     } catch (err: any) {
@@ -95,17 +110,86 @@ export default function ConjuntoDashboardPage({ params }: { params: Promise<{ id
     }
   };
 
+  const openEditPropiedad = (p: any) => {
+    setPropiedadAEditar(p);
+    setNumero(p.numero);
+    setExtension(p.extension.toString());
+    setComplejidad(p.complejidad);
+    setIsEditPropiedadModalOpen(true);
+  };
+
+  const handleActualizarPropiedad = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!propiedadAEditar) return;
+    setIsSubmitting(true);
+    try {
+      await fetchApi(`/propiedades/${propiedadAEditar.id}`, {
+        method: 'PATCH',
+        body: JSON.stringify({
+          numero,
+          extension: parseFloat(extension),
+          complejidad
+        })
+      });
+      setIsEditPropiedadModalOpen(false);
+      loadData();
+    } catch (error) {
+      console.error(error);
+      alert('Error al actualizar propiedad');
+    } finally {
+      setIsSubmitting(false);
+    }
+  };
+
   const handleDesactivar = async (propiedadId: string) => {
     if (!confirm('¿Seguro que deseas ocultar esta casa? No se borrarán sus registros pasados.')) return;
     try {
-      const res = await fetchApi(`/propiedades/${propiedadId}/desactivar`, {
-        method: 'PATCH',
-      });
-      if (res.success) {
-        loadData();
-      }
+      await fetchApi(`/propiedades/${propiedadId}/desactivar`, { method: 'PATCH' });
+      loadData();
     } catch (err: any) {
-      alert(err.message || 'Error al desactivar la propiedad');
+      console.error(err);
+      alert('Error al ocultar la propiedad');
+    }
+  };
+
+  const handleTogglePropiedad = (id: string) => {
+    setSelectedPropiedades(prev => 
+      prev.includes(id) ? prev.filter(pId => pId !== id) : [...prev, id]
+    );
+  };
+
+  const handleSelectAll = () => {
+    if (selectedPropiedades.length === propiedades.length) {
+      setSelectedPropiedades([]);
+    } else {
+      setSelectedPropiedades(propiedades.map(p => p.id));
+    }
+  };
+
+  const handleActualizarMasivo = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (selectedPropiedades.length === 0) return;
+    setIsSubmitting(true);
+    
+    try {
+      await fetchApi('/propiedades/bulk/update', {
+        method: 'PATCH',
+        body: JSON.stringify({
+          ids: selectedPropiedades,
+          extension: bulkExtension ? parseFloat(bulkExtension) : undefined,
+          complejidad: bulkComplejidad || undefined
+        })
+      });
+      setIsBulkEditModalOpen(false);
+      setSelectedPropiedades([]);
+      setBulkExtension('');
+      setBulkComplejidad('');
+      loadData();
+    } catch (error) {
+      console.error(error);
+      alert('Error al actualizar propiedades');
+    } finally {
+      setIsSubmitting(false);
     }
   };
 
@@ -224,19 +308,34 @@ export default function ConjuntoDashboardPage({ params }: { params: Promise<{ id
             ) : (
               <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
                 {propiedades.map((p: any) => (
-                  <div key={p.id} className="bg-white p-5 rounded-2xl border border-slate-200 shadow-sm flex flex-col justify-between">
+                  <div 
+                    key={p.id} 
+                    className={`p-5 rounded-2xl border shadow-sm flex flex-col justify-between transition-all cursor-pointer ${selectedPropiedades.includes(p.id) ? 'bg-brand-50 border-brand-300 ring-2 ring-brand-500/20' : 'bg-white border-slate-200'}`}
+                    onClick={() => handleTogglePropiedad(p.id)}
+                  >
                     <div>
                       <div className="flex justify-between items-start mb-2">
-                        <h3 className="font-bold text-lg text-slate-900">{p.numero}</h3>
+                        <div className="flex items-center gap-2">
+                          <input 
+                            type="checkbox" 
+                            checked={selectedPropiedades.includes(p.id)}
+                            onChange={() => {}} // Handled by div onClick
+                            className="w-4 h-4 text-brand-600 rounded border-slate-300 focus:ring-brand-500"
+                          />
+                          <h3 className="font-bold text-lg text-slate-900">{p.numero}</h3>
+                        </div>
                         <span className="text-xs font-medium bg-slate-100 px-2 py-1 rounded text-slate-600">{p.complejidad}</span>
                       </div>
                       <div className="flex justify-between items-start">
                         <p className="text-sm text-slate-500 mb-4">{p.extension} m²</p>
-                        <div className="flex gap-1">
-                          <button onClick={() => verHistorial(p)} title="Ver Historial" className="p-1.5 text-slate-400 hover:text-brand-600 hover:bg-slate-100 rounded-md transition-colors">
+                        <div className="flex gap-1" onClick={e => e.stopPropagation()}>
+                          <button onClick={() => openEditPropiedad(p)} title="Editar Casa" className="p-1.5 text-slate-400 hover:text-brand-600 hover:bg-white rounded-md transition-colors">
+                            <Edit2 size={16} />
+                          </button>
+                          <button onClick={() => verHistorial(p)} title="Ver Historial" className="p-1.5 text-slate-400 hover:text-brand-600 hover:bg-white rounded-md transition-colors">
                             <History size={16} />
                           </button>
-                          <button onClick={() => handleDesactivar(p.id)} title="Eliminar/Ocultar" className="p-1.5 text-slate-400 hover:text-red-500 hover:bg-red-50 rounded-md transition-colors">
+                          <button onClick={() => handleDesactivar(p.id)} title="Eliminar/Ocultar" className="p-1.5 text-slate-400 hover:text-red-500 hover:bg-white rounded-md transition-colors">
                             <Trash2 size={16} />
                           </button>
                         </div>
@@ -257,7 +356,14 @@ export default function ConjuntoDashboardPage({ params }: { params: Promise<{ id
                         <p className="text-slate-400">PIN de Acceso</p>
                         <p className="font-mono font-bold text-slate-700 tracking-widest">{p.pinAcceso || '****'}</p>
                       </div>
-                      <button className="px-3 py-1.5 text-sm rounded-md text-brand-600 hover:text-brand-700 hover:bg-brand-50 transition-colors">
+                      <button 
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          setQrModalPropiedad(p);
+                          setIsQrModalOpen(true);
+                        }}
+                        className="px-3 py-1.5 text-sm rounded-md text-brand-600 hover:text-brand-700 hover:bg-white transition-colors"
+                      >
                         Ver QR
                       </button>
                     </div>
@@ -265,6 +371,27 @@ export default function ConjuntoDashboardPage({ params }: { params: Promise<{ id
                 ))}
               </div>
             )}
+          </div>
+        )}
+
+        {/* Floating Action Bar for Bulk Selection */}
+        {selectedPropiedades.length > 0 && activeTab === 'propiedades' && (
+          <div className="fixed bottom-6 left-1/2 -translate-x-1/2 bg-slate-900 text-white px-6 py-4 rounded-2xl shadow-2xl flex items-center gap-6 z-40 animate-in slide-in-from-bottom-10">
+            <div className="flex items-center gap-2">
+              <span className="bg-brand-500 text-white w-6 h-6 rounded-full flex items-center justify-center text-xs font-bold">{selectedPropiedades.length}</span>
+              <span className="font-medium text-sm">casas seleccionadas</span>
+            </div>
+            <div className="flex items-center gap-3 border-l border-slate-700 pl-6">
+              <button onClick={handleSelectAll} className="text-slate-300 hover:text-white text-sm font-medium transition-colors">
+                {selectedPropiedades.length === propiedades.length ? 'Deseleccionar todas' : 'Seleccionar todas'}
+              </button>
+              <button 
+                onClick={() => setIsBulkEditModalOpen(true)} 
+                className="bg-brand-500 hover:bg-brand-600 px-4 py-2 rounded-xl text-sm font-bold shadow-lg shadow-brand-500/20 transition-all flex items-center gap-2"
+              >
+                <Edit2 size={14} /> Editar
+              </button>
+            </div>
           </div>
         )}
 
@@ -347,7 +474,7 @@ export default function ConjuntoDashboardPage({ params }: { params: Promise<{ id
                         placeholder="Ej: Casa " 
                         value={numero} 
                         onChange={(e: React.ChangeEvent<HTMLInputElement>) => setNumero(e.target.value)} 
-                        className="w-full h-10 px-3 rounded-xl border border-slate-200 bg-white text-sm outline-none focus:ring-2 focus:ring-brand-500"
+                        className="w-full h-10 px-3 rounded-xl border border-slate-200 bg-white text-sm text-slate-900 outline-none focus:ring-2 focus:ring-brand-500"
                       />
                     </div>
                     <div>
@@ -360,7 +487,7 @@ export default function ConjuntoDashboardPage({ params }: { params: Promise<{ id
                         placeholder="Ej: 50" 
                         value={cantidadMasiva} 
                         onChange={(e: React.ChangeEvent<HTMLInputElement>) => setCantidadMasiva(e.target.value)} 
-                        className="w-full h-10 px-3 rounded-xl border border-slate-200 bg-white text-sm outline-none focus:ring-2 focus:ring-brand-500"
+                        className="w-full h-10 px-3 rounded-xl border border-slate-200 bg-white text-sm text-slate-900 outline-none focus:ring-2 focus:ring-brand-500"
                       />
                     </div>
                   </div>
@@ -372,12 +499,12 @@ export default function ConjuntoDashboardPage({ params }: { params: Promise<{ id
                       placeholder="Ej: Casa 14, Apto 201" 
                       value={numero} 
                       onChange={(e: React.ChangeEvent<HTMLInputElement>) => setNumero(e.target.value)} 
-                      className="w-full h-10 px-3 rounded-xl border border-slate-200 bg-white text-sm outline-none focus:ring-2 focus:ring-brand-500"
+                      className="w-full h-10 px-3 rounded-xl border border-slate-200 bg-white text-sm text-slate-900 outline-none focus:ring-2 focus:ring-brand-500"
                     />
                   </div>
                 )}
                 
-                <div className="grid grid-cols-2 gap-4">
+                <div className="grid grid-cols-1 gap-4">
                   <div>
                     <label className="block text-sm font-semibold text-slate-700 mb-1.5">Extensión (m²)</label>
                     <input 
@@ -387,20 +514,8 @@ export default function ConjuntoDashboardPage({ params }: { params: Promise<{ id
                       placeholder="0.00" 
                       value={extension} 
                       onChange={(e: React.ChangeEvent<HTMLInputElement>) => setExtension(e.target.value)} 
-                      className="w-full h-10 px-3 rounded-xl border border-slate-200 bg-white text-sm outline-none focus:ring-2 focus:ring-brand-500"
+                      className="w-full h-10 px-3 rounded-xl border border-slate-200 bg-white text-sm text-slate-900 outline-none focus:ring-2 focus:ring-brand-500"
                     />
-                  </div>
-                  <div>
-                    <label className="block text-sm font-semibold text-slate-700 mb-1.5">Complejidad</label>
-                    <select 
-                      value={complejidad} 
-                      onChange={(e: React.ChangeEvent<HTMLSelectElement>) => setComplejidad(e.target.value as any)}
-                      className="w-full h-10 px-3 rounded-xl border border-slate-200 bg-white text-sm outline-none focus:ring-2 focus:ring-brand-500"
-                    >
-                      <option value="BAJA">Baja</option>
-                      <option value="MEDIA">Media</option>
-                      <option value="ALTA">Alta</option>
-                    </select>
                   </div>
                 </div>
               </div>
@@ -430,7 +545,7 @@ export default function ConjuntoDashboardPage({ params }: { params: Promise<{ id
         <div className="fixed inset-0 bg-slate-900/40 backdrop-blur-sm z-50 flex items-center justify-center p-4 animate-in fade-in duration-200">
           <div className="bg-white rounded-3xl w-full max-w-md shadow-2xl overflow-hidden animate-in zoom-in-95 duration-300">
             <div className="px-6 py-4 border-b border-slate-100 flex justify-between items-center bg-slate-50/50">
-              <h3 className="font-bold text-lg text-slate-800">Crear Cotización</h3>
+              <h3 className="font-bold text-lg text-slate-800">Nueva Cotización Global</h3>
               <button onClick={() => setIsCotizacionModalOpen(false)} className="p-2 text-slate-400 hover:text-slate-600 hover:bg-slate-100 rounded-full transition-colors">
                 <X size={20} />
               </button>
@@ -439,33 +554,35 @@ export default function ConjuntoDashboardPage({ params }: { params: Promise<{ id
             <form onSubmit={handleCrearCotizacion} className="p-6">
               <div className="space-y-4">
                 <div>
-                  <label className="block text-sm font-semibold text-slate-700 mb-1.5">Precio Total (COP)</label>
-                  <input 
-                    required 
-                    type="number"
-                    placeholder="Ej: 500000" 
-                    value={precioTotal} 
-                    onChange={(e: React.ChangeEvent<HTMLInputElement>) => setPrecioTotal(e.target.value)} 
-                    className="w-full h-12 px-4 rounded-xl border border-slate-200 bg-white text-lg outline-none focus:ring-2 focus:ring-brand-500"
-                  />
-                </div>
-                <div>
-                  <label className="block text-sm font-semibold text-slate-700 mb-1.5">Descripción de la Propuesta</label>
+                  <label className="block text-sm font-semibold text-slate-700 mb-1.5">Descripción General</label>
                   <textarea 
-                    required
-                    rows={4}
-                    placeholder="Detalles del servicio a cotizar..."
-                    value={detallesCotizacion}
-                    onChange={(e: React.ChangeEvent<HTMLTextAreaElement>) => setDetallesCotizacion(e.target.value)}
-                    className="w-full p-3 rounded-xl border border-slate-200 bg-white text-sm outline-none focus:ring-2 focus:ring-brand-500 resize-none"
+                    required 
+                    rows={3}
+                    placeholder="Ej: Mantenimiento trimestral de todas las áreas comunes..." 
+                    value={cotDescripcion} 
+                    onChange={(e) => setCotDescripcion(e.target.value)} 
+                    className="w-full p-3 rounded-xl border border-slate-200 bg-white text-sm text-slate-900 outline-none focus:ring-2 focus:ring-brand-500 resize-none"
                   ></textarea>
                 </div>
+                
+                <div>
+                  <label className="block text-sm font-semibold text-slate-700 mb-1.5">Precio Total Cotizado (COP)</label>
+                  <input 
+                    required 
+                    type="number" 
+                    step="0.01" 
+                    placeholder="0.00" 
+                    value={cotPrecio} 
+                    onChange={(e) => setCotPrecio(e.target.value)} 
+                    className="w-full h-10 px-3 rounded-xl border border-slate-200 bg-white text-sm text-slate-900 outline-none focus:ring-2 focus:ring-brand-500"
+                  />
+                </div>
               </div>
-
+              
               <div className="mt-8 flex gap-3">
                 <button 
                   type="button" 
-                  className="flex-1 px-4 py-2 border border-slate-200 text-slate-700 rounded-xl hover:bg-slate-50"
+                  className="flex-1 px-4 py-2.5 border border-slate-200 text-slate-700 font-semibold rounded-xl hover:bg-slate-50 transition-colors"
                   onClick={() => setIsCotizacionModalOpen(false)}
                 >
                   Cancelar
@@ -473,12 +590,43 @@ export default function ConjuntoDashboardPage({ params }: { params: Promise<{ id
                 <button 
                   type="submit" 
                   disabled={isSubmitting} 
-                  className="flex-1 px-4 py-2 bg-brand-600 hover:bg-brand-700 text-white rounded-xl disabled:opacity-50"
+                  className="flex-1 px-4 py-2.5 bg-brand-600 hover:bg-brand-700 text-white font-bold rounded-xl transition-colors disabled:opacity-50"
                 >
-                  {isSubmitting ? 'Guardando...' : 'Guardar Cotización'}
+                  {isSubmitting ? 'Guardando...' : 'Crear Cotización'}
                 </button>
               </div>
             </form>
+          </div>
+        </div>
+      )}
+
+      {/* QR Modal */}
+      {isQrModalOpen && qrModalPropiedad && (
+        <div className="fixed inset-0 bg-slate-900/40 backdrop-blur-sm z-50 flex items-center justify-center p-4 animate-in fade-in duration-200">
+          <div className="bg-white rounded-3xl w-full max-w-sm shadow-2xl overflow-hidden animate-in zoom-in-95 duration-300">
+            <div className="px-6 py-4 border-b border-slate-100 flex justify-between items-center bg-slate-50/50">
+              <h3 className="font-bold text-lg text-slate-800">Código QR de Acceso</h3>
+              <button onClick={() => setIsQrModalOpen(false)} className="p-2 text-slate-400 hover:text-slate-600 hover:bg-slate-100 rounded-full transition-colors">
+                <X size={20} />
+              </button>
+            </div>
+            <div className="p-8 flex flex-col items-center">
+              <div className="bg-white p-4 rounded-xl shadow-sm border border-slate-200 mb-4">
+                <QRCodeSVG 
+                  value={`${typeof window !== 'undefined' ? window.location.origin : 'http://localhost:3000'}/p/${qrModalPropiedad.identificadorUnicoQr}`}
+                  size={200}
+                  level="H"
+                  includeMargin={true}
+                />
+              </div>
+              <p className="text-center font-bold text-xl text-slate-800">{qrModalPropiedad.numero}</p>
+              <p className="text-center text-sm text-slate-500 mb-4">{conjunto?.nombre}</p>
+              
+              <div className="bg-emerald-50 border border-emerald-100 p-3 rounded-lg w-full text-center">
+                <p className="text-xs text-emerald-600 uppercase font-bold mb-1">PIN de Seguridad</p>
+                <p className="text-2xl font-mono tracking-widest font-bold text-emerald-700">{qrModalPropiedad.pinAcceso}</p>
+              </div>
+            </div>
           </div>
         </div>
       )}
@@ -525,6 +673,143 @@ export default function ConjuntoDashboardPage({ params }: { params: Promise<{ id
                 </div>
               )}
             </div>
+          </div>
+        </div>
+      )}
+
+      {/* Modal Editar Propiedad */}
+      {isEditPropiedadModalOpen && (
+        <div className="fixed inset-0 bg-slate-900/40 backdrop-blur-sm z-50 flex items-center justify-center p-4 animate-in fade-in duration-200">
+          <div className="bg-white rounded-3xl w-full max-w-md shadow-2xl overflow-hidden animate-in zoom-in-95 duration-300">
+            <div className="px-6 py-4 border-b border-slate-100 flex justify-between items-center bg-slate-50/50">
+              <h3 className="font-bold text-lg text-slate-800">Editar Casa / Propiedad</h3>
+              <button onClick={() => setIsEditPropiedadModalOpen(false)} className="p-2 text-slate-400 hover:text-slate-600 hover:bg-slate-100 rounded-full transition-colors">
+                <X size={20} />
+              </button>
+            </div>
+            
+            <form onSubmit={handleActualizarPropiedad} className="p-6">
+              <div className="space-y-4">
+                <div>
+                  <label className="block text-sm font-semibold text-slate-700 mb-1.5">Número / Identificador</label>
+                  <input 
+                    required 
+                    placeholder="Ej: Casa 14" 
+                    value={numero} 
+                    onChange={(e: React.ChangeEvent<HTMLInputElement>) => setNumero(e.target.value)} 
+                    className="w-full h-10 px-3 rounded-xl border border-slate-200 bg-white text-sm text-slate-900 outline-none focus:ring-2 focus:ring-brand-500"
+                  />
+                </div>
+                
+                <div className="grid grid-cols-2 gap-4">
+                  <div>
+                    <label className="block text-sm font-semibold text-slate-700 mb-1.5">Extensión (m²)</label>
+                    <input 
+                      required 
+                      type="number" 
+                      step="0.01" 
+                      placeholder="0.00" 
+                      value={extension} 
+                      onChange={(e: React.ChangeEvent<HTMLInputElement>) => setExtension(e.target.value)} 
+                      className="w-full h-10 px-3 rounded-xl border border-slate-200 bg-white text-sm text-slate-900 outline-none focus:ring-2 focus:ring-brand-500"
+                    />
+                  </div>
+                  <div>
+                    <label className="block text-sm font-semibold text-slate-700 mb-1.5">Complejidad</label>
+                    <select 
+                      value={complejidad} 
+                      onChange={(e: React.ChangeEvent<HTMLSelectElement>) => setComplejidad(e.target.value as any)}
+                      className="w-full h-10 px-3 rounded-xl border border-slate-200 bg-white text-sm text-slate-900 outline-none focus:ring-2 focus:ring-brand-500"
+                    >
+                      <option value="BAJA">Baja</option>
+                      <option value="MEDIA">Media</option>
+                      <option value="ALTA">Alta</option>
+                    </select>
+                  </div>
+                </div>
+              </div>
+
+              <div className="mt-8 flex gap-3">
+                <button 
+                  type="button" 
+                  className="flex-1 px-4 py-2 border border-slate-200 text-slate-700 rounded-xl hover:bg-slate-50 transition-colors"
+                  onClick={() => setIsEditPropiedadModalOpen(false)}
+                >
+                  Cancelar
+                </button>
+                <button 
+                  type="submit" 
+                  disabled={isSubmitting} 
+                  className="flex-1 px-4 py-2 bg-brand-600 hover:bg-brand-700 text-white rounded-xl disabled:opacity-50 transition-colors"
+                >
+                  {isSubmitting ? 'Guardando...' : 'Guardar Cambios'}
+                </button>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
+
+      {/* Modal Edición Masiva */}
+      {isBulkEditModalOpen && (
+        <div className="fixed inset-0 bg-slate-900/40 backdrop-blur-sm z-50 flex items-center justify-center p-4 animate-in fade-in duration-200">
+          <div className="bg-white rounded-3xl w-full max-w-md shadow-2xl overflow-hidden animate-in zoom-in-95 duration-300">
+            <div className="px-6 py-4 border-b border-slate-100 flex justify-between items-center bg-slate-50/50">
+              <h3 className="font-bold text-lg text-slate-800">Edición Masiva ({selectedPropiedades.length} casas)</h3>
+              <button onClick={() => setIsBulkEditModalOpen(false)} className="p-2 text-slate-400 hover:text-slate-600 hover:bg-slate-100 rounded-full transition-colors">
+                <X size={20} />
+              </button>
+            </div>
+            
+            <form onSubmit={handleActualizarMasivo} className="p-6">
+              <p className="text-sm text-slate-500 mb-6">Los campos que dejes en blanco mantendrán su valor original.</p>
+              
+              <div className="space-y-4">
+                <div className="grid grid-cols-2 gap-4">
+                  <div>
+                    <label className="block text-sm font-semibold text-slate-700 mb-1.5">Extensión (m²)</label>
+                    <input 
+                      type="number" 
+                      step="0.01" 
+                      placeholder="Sin cambios" 
+                      value={bulkExtension} 
+                      onChange={(e) => setBulkExtension(e.target.value)} 
+                      className="w-full h-10 px-3 rounded-xl border border-slate-200 bg-white text-sm text-slate-900 outline-none focus:ring-2 focus:ring-brand-500"
+                    />
+                  </div>
+                  <div>
+                    <label className="block text-sm font-semibold text-slate-700 mb-1.5">Complejidad</label>
+                    <select 
+                      value={bulkComplejidad} 
+                      onChange={(e) => setBulkComplejidad(e.target.value)}
+                      className="w-full h-10 px-3 rounded-xl border border-slate-200 bg-white text-sm text-slate-900 outline-none focus:ring-2 focus:ring-brand-500"
+                    >
+                      <option value="">Sin cambios</option>
+                      <option value="BAJA">Baja</option>
+                      <option value="MEDIA">Media</option>
+                      <option value="ALTA">Alta</option>
+                    </select>
+                  </div>
+                </div>
+              </div>
+
+              <div className="mt-8 flex gap-3">
+                <button 
+                  type="button" 
+                  className="flex-1 px-4 py-2 border border-slate-200 text-slate-700 rounded-xl hover:bg-slate-50 transition-colors"
+                  onClick={() => setIsBulkEditModalOpen(false)}
+                >
+                  Cancelar
+                </button>
+                <button 
+                  type="submit" 
+                  disabled={isSubmitting || (!bulkExtension && !bulkComplejidad)} 
+                  className="flex-1 px-4 py-2 bg-brand-600 hover:bg-brand-700 text-white rounded-xl disabled:opacity-50 transition-colors"
+                >
+                  {isSubmitting ? 'Aplicando...' : 'Aplicar a Todas'}
+                </button>
+              </div>
+            </form>
           </div>
         </div>
       )}
