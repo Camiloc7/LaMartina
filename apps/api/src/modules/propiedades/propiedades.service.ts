@@ -1,7 +1,9 @@
 import { AppDataSource } from '../../config/database';
 import { Propiedad } from '../../entities/Propiedad';
+import { OrdenTrabajo } from '../../entities/OrdenTrabajo';
 
 const propiedadRepo = AppDataSource.getRepository(Propiedad);
+const ordenTrabajoRepo = AppDataSource.getRepository(OrdenTrabajo);
 
 function generatePin(): string {
   return Math.floor(1000 + Math.random() * 9000).toString();
@@ -31,6 +33,30 @@ export const PropiedadesService = {
     });
 
     return await propiedadRepo.save(nuevaPropiedad);
+  },
+
+  async crearMasivo(data: {
+    prefijo: string;
+    cantidad: number;
+    extension: number;
+    complejidad: 'BAJA' | 'MEDIA' | 'ALTA';
+    conjuntoId: string;
+  }): Promise<Propiedad[]> {
+    const propiedades = [];
+    for (let i = 1; i <= data.cantidad; i++) {
+      propiedades.push(
+        propiedadRepo.create({
+          numero: `${data.prefijo}${i}`,
+          extension: data.extension,
+          complejidad: data.complejidad,
+          conjuntoId: data.conjuntoId,
+          identificadorUnicoQr: generateQrId(),
+          pinAcceso: generatePin(),
+        })
+      );
+    }
+    // save() accepts an array to save in bulk
+    return await propiedadRepo.save(propiedades);
   },
 
   async obtenerTodos(filtros: { conjuntoId?: string; propietarioId?: string }): Promise<Propiedad[]> {
@@ -70,5 +96,23 @@ export const PropiedadesService = {
     // Remove pin from result
     const { pinAcceso, ...rest } = propiedad;
     return rest as Propiedad;
+  },
+
+  async desactivar(id: string): Promise<void> {
+    await propiedadRepo.update(id, { activo: false });
+  },
+
+  async obtenerHistorial(id: string, limit?: number): Promise<OrdenTrabajo[]> {
+    // Historial se basa en Ordenes de Trabajo asociadas a la programación de esta propiedad
+    return await ordenTrabajoRepo.find({
+      where: {
+        programacion: {
+          propiedadId: id
+        }
+      },
+      relations: ['programacion', 'programacion.cotizacion', 'operario'],
+      order: { fechaFin: 'DESC' },
+      take: limit // if limit is undefined, returns all
+    });
   },
 };

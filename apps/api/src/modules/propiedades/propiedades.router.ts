@@ -1,5 +1,5 @@
 import { Router } from 'express';
-import { crear, getAll, getById, authQr } from './propiedades.controller';
+import { crear, getAll, getById, authQr, crearMasivo, desactivar, getHistorial } from './propiedades.controller';
 import { authenticate, authorize } from '../../middleware/authenticate';
 
 export const propiedadesRouter: Router = Router();
@@ -9,11 +9,16 @@ propiedadesRouter.post('/qr-auth', authQr);
 
 propiedadesRouter.use(authenticate);
 
-// Listar propiedades (accesible por ADMIN, SUPER_ADMIN y el dueño si se filtran las suyas, lo cual debe validarse en controller o policy)
+// Rutas de administración
+propiedadesRouter.post('/', authorize('SUPER_ADMIN', 'ADMIN'), crear);
+propiedadesRouter.post('/bulk', authorize('SUPER_ADMIN', 'ADMIN'), crearMasivo);
 propiedadesRouter.get('/', getAll);
 
 // Obtener por ID
 propiedadesRouter.get('/:id', getById);
 
-// Crear propiedad (solo ADMIN / SUPER_ADMIN)
-propiedadesRouter.post('/', authorize('SUPER_ADMIN', 'ADMIN'), crear);
+// Soft Delete
+propiedadesRouter.patch('/:id/desactivar', authorize('SUPER_ADMIN', 'ADMIN'), desactivar);
+
+// Historial
+propiedadesRouter.get('/:id/historial', getHistorial);

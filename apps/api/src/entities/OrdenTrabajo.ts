@@ -46,6 +46,15 @@ export class OrdenTrabajo {
   evidenciaFotos: string[] = [];
 
   /**
+   * Geolocalización donde se completó el servicio (latitud y longitud).
+   */
+  @Column({ type: 'decimal', precision: 10, scale: 7, nullable: true })
+  latitud?: number;
+
+  @Column({ type: 'decimal', precision: 10, scale: 7, nullable: true })
+  longitud?: number;
+
+  /**
    * URL del reporte PDF final.
    */
   @Column({ length: 500, nullable: true })

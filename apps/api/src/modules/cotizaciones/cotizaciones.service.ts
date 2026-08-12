@@ -65,4 +65,47 @@ export const CotizacionesService = {
 
     return { cotizacion: cotizacionActualizada, programacion: programacionGuardada };
   },
+
+  async registrarPago(id: string, data: { monto: number; fecha: string; notas?: string }): Promise<Cotizacion> {
+    const cotizacion = await cotizacionRepo.findOne({ where: { id } });
+    if (!cotizacion) throw new Error('Cotizacion no encontrada');
+
+    const montoNumber = Number(data.monto);
+    cotizacion.montoPagado = Number(cotizacion.montoPagado) + montoNumber;
+    
+    const nuevoPago = {
+      monto: montoNumber,
+      fecha: data.fecha,
+      notas: data.notas || ''
+    };
+
+    cotizacion.historialPagos = [...(cotizacion.historialPagos || []), nuevoPago];
+
+    if (cotizacion.montoPagado >= cotizacion.precioTotal) {
+      cotizacion.estadoPago = 'PAGADO';
+    } else if (cotizacion.montoPagado > 0) {
+      cotizacion.estadoPago = 'PARCIAL';
+    }
+
+    return await cotizacionRepo.save(cotizacion);
+  },
+
+  async obtenerResumenFinanciero(): Promise<{ totalCotizado: number; totalRecaudado: number; saldoPendiente: number }> {
+    // Solo contar cotizaciones APROBADAS para el total cotizado
+    const cotizaciones = await cotizacionRepo.find({ where: { estado: 'APROBADA' } });
+    
+    let totalCotizado = 0;
+    let totalRecaudado = 0;
+
+    for (const cot of cotizaciones) {
+      totalCotizado += Number(cot.precioTotal);
+      totalRecaudado += Number(cot.montoPagado);
+    }
+
+    return {
+      totalCotizado,
+      totalRecaudado,
+      saldoPendiente: totalCotizado - totalRecaudado
+    };
+  },
 };

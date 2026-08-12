@@ -3,7 +3,7 @@
 import { useState, useEffect } from 'react';
 import { useRouter, usePathname } from 'next/navigation';
 import Link from 'next/link';
-import { CalendarClock, User, LogOut, Map, Bell } from 'lucide-react';
+import { CalendarClock, User, LogOut, Home, MessageSquareWarning, Wrench, Bell } from 'lucide-react';
 import { fetchApi } from '@/lib/api';
 
 export default function OperarioLayout({
@@ -110,36 +110,36 @@ export default function OperarioLayout({
         <nav className="max-w-sm mx-auto bg-slate-900/80 backdrop-blur-2xl border border-slate-700/50 shadow-2xl shadow-black/50 rounded-3xl flex justify-around p-2 pointer-events-auto relative overflow-hidden">
           
           <Link 
-            href="/operario/jornadas" 
-            className={`flex flex-col items-center p-3 rounded-2xl transition-all duration-300 w-1/3 relative z-10 ${pathname.includes('jornadas') ? 'text-white' : 'text-slate-500 hover:text-slate-300'}`}
+            href="/operario/dashboard" 
+            className={`flex flex-col items-center p-3 rounded-2xl transition-all duration-300 w-1/3 relative z-10 ${pathname.includes('dashboard') ? 'text-white' : 'text-slate-500 hover:text-slate-300'}`}
           >
-            {pathname.includes('jornadas') && (
+            {pathname.includes('dashboard') && (
               <div className="absolute inset-0 bg-brand-500/20 rounded-2xl animate-fade-in"></div>
             )}
-            <CalendarClock size={24} className={`mb-1 ${pathname.includes('jornadas') ? 'drop-shadow-[0_0_8px_rgba(34,197,94,0.5)]' : ''}`} />
-            <span className="text-[10px] font-bold uppercase tracking-wider">Jornada</span>
+            <Home size={24} className={`mb-1 ${pathname.includes('dashboard') ? 'drop-shadow-[0_0_8px_rgba(34,197,94,0.5)]' : ''}`} />
+            <span className="text-[10px] font-bold uppercase tracking-wider">Inicio</span>
           </Link>
 
           <Link 
-            href="/operario/mapa" 
-            className={`flex flex-col items-center p-3 rounded-2xl transition-all duration-300 w-1/3 relative z-10 ${pathname.includes('mapa') ? 'text-white' : 'text-slate-500 hover:text-slate-300'}`}
+            href="/operario/trabajos" 
+            className={`flex flex-col items-center p-3 rounded-2xl transition-all duration-300 w-1/3 relative z-10 ${pathname.includes('trabajos') ? 'text-white' : 'text-slate-500 hover:text-slate-300'}`}
           >
-            {pathname.includes('mapa') && (
+            {pathname.includes('trabajos') && (
               <div className="absolute inset-0 bg-brand-500/20 rounded-2xl animate-fade-in"></div>
             )}
-            <Map size={24} className="mb-1" />
-            <span className="text-[10px] font-bold uppercase tracking-wider">Rutas</span>
+            <Wrench size={24} className={`mb-1 ${pathname.includes('trabajos') ? 'drop-shadow-[0_0_8px_rgba(34,197,94,0.5)]' : ''}`} />
+            <span className="text-[10px] font-bold uppercase tracking-wider">Trabajos</span>
           </Link>
 
           <Link 
-            href="/operario/perfil" 
-            className={`flex flex-col items-center p-3 rounded-2xl transition-all duration-300 w-1/3 relative z-10 ${pathname.includes('perfil') ? 'text-white' : 'text-slate-500 hover:text-slate-300'}`}
+            href="/operario/pqrs" 
+            className={`flex flex-col items-center p-3 rounded-2xl transition-all duration-300 w-1/3 relative z-10 ${pathname.includes('pqrs') ? 'text-white' : 'text-slate-500 hover:text-slate-300'}`}
           >
-            {pathname.includes('perfil') && (
+            {pathname.includes('pqrs') && (
               <div className="absolute inset-0 bg-brand-500/20 rounded-2xl animate-fade-in"></div>
             )}
-            <User size={24} className="mb-1" />
-            <span className="text-[10px] font-bold uppercase tracking-wider">Perfil</span>
+            <MessageSquareWarning size={24} className={`mb-1 ${pathname.includes('pqrs') ? 'drop-shadow-[0_0_8px_rgba(34,197,94,0.5)]' : ''}`} />
+            <span className="text-[10px] font-bold uppercase tracking-wider">Tickets</span>
           </Link>
         </nav>
       </div>

@@ -14,7 +14,7 @@ export default function PrintQRsPage({ params }: { params: Promise<{ id: string 
       try {
         const res = await fetchApi(`/propiedades?conjuntoId=${id}`);
         if (res.success) {
-          setPropiedades(res.data || resProp); // based on backend response
+          setPropiedades(res.data || []); // fixed resProp
         }
       } catch (err) {
         console.error(err);

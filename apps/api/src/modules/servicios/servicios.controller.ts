@@ -7,40 +7,40 @@ export const getAllProgramaciones = async (req: Request, res: Response) => {
     conjuntoId: conjuntoId as string,
     estado: estado as string,
   });
-  res.json(programaciones);
+  res.json({ success: true, data: programaciones });
 };
 
 export const getProgramacionById = async (req: Request, res: Response) => {
   const { id } = req.params;
   const programacion = await ServiciosService.obtenerProgramacionPorId(id);
   if (!programacion) {
-    return res.status(404).json({ error: 'Programacion no encontrada' });
+    return res.status(404).json({ success: false, error: 'Programacion no encontrada' });
   }
-  res.json(programacion);
+  res.json({ success: true, data: programacion });
 };
 
 export const iniciar = async (req: Request, res: Response) => {
   const { id } = req.params;
   const user = (req as any).user; // middleware de auth inyecta el user
   
-  if (!user) return res.status(401).json({ error: 'No autorizado' });
+  if (!user) return res.status(401).json({ success: false, error: 'No autorizado' });
 
   try {
     const orden = await ServiciosService.iniciarOrdenTrabajo(id, user.id);
-    res.status(201).json(orden);
+    res.status(201).json({ success: true, data: orden });
   } catch (error: any) {
-    res.status(400).json({ error: error.message });
+    res.status(400).json({ success: false, error: error.message });
   }
 };
 
 export const completar = async (req: Request, res: Response) => {
   const { id } = req.params; // ID de la Orden de Trabajo
-  const { observaciones, evidenciaFotos } = req.body;
+  const { observaciones, evidenciaFotos, latitud, longitud } = req.body;
 
   try {
-    const orden = await ServiciosService.completarOrdenTrabajo(id, { observaciones, evidenciaFotos });
-    res.json(orden);
+    const orden = await ServiciosService.completarOrdenTrabajo(id, { observaciones, evidenciaFotos, latitud, longitud });
+    res.json({ success: true, data: orden });
   } catch (error: any) {
-    res.status(400).json({ error: error.message });
+    res.status(400).json({ success: false, error: error.message });
   }
 };

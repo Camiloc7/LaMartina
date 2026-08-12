@@ -1,9 +1,7 @@
 'use client';
 
-import React, { useState, use, useEffect } from 'react';
+import React, { useState, use } from 'react';
 import { Lock, Home, FileText, MessageSquare, AlertCircle, Loader2 } from 'lucide-react';
-import { Button } from '@/components/ui/button';
-import { Input } from '@/components/ui/input';
 
 export default function QrPortalPage({ params }: { params: Promise<{ qr_id: string }> }) {
   // En Next.js 15, params es una Promesa.
@@ -14,6 +12,8 @@ export default function QrPortalPage({ params }: { params: Promise<{ qr_id: stri
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
   const [propiedad, setPropiedad] = useState<any>(null);
+  const [historial, setHistorial] = useState<any[]>([]);
+  const [loadingHistorial, setLoadingHistorial] = useState(false);
 
   const handleAuth = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -43,12 +43,31 @@ export default function QrPortalPage({ params }: { params: Promise<{ qr_id: stri
       }
 
       const data = await res.json();
-      setPropiedad(data);
+      setPropiedad(data.data || data); // depending on backend format
       setIsAuthenticated(true);
+      
+      // Cargar historial (últimos 2)
+      cargarHistorial((data.data || data).id);
     } catch (err: any) {
       setError(err.message || 'Error de conexión');
     } finally {
       setLoading(false);
+    }
+  };
+
+  const cargarHistorial = async (id: string) => {
+    setLoadingHistorial(true);
+    try {
+      const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3001/api/v1';
+      const res = await fetch(`${API_URL}/propiedades/${id}/historial?limit=2`);
+      if (res.ok) {
+        const hData = await res.json();
+        setHistorial(hData.data || []);
+      }
+    } catch (e) {
+      console.error(e);
+    } finally {
+      setLoadingHistorial(false);
     }
   };
 
@@ -68,15 +87,15 @@ export default function QrPortalPage({ params }: { params: Promise<{ qr_id: stri
 
         <form onSubmit={handleAuth} className="w-full max-w-xs space-y-4 pt-4">
           <div className="space-y-2">
-            <Input
+            <input
               type="password"
               inputMode="numeric"
               pattern="[0-9]*"
               maxLength={4}
               placeholder="••••"
               value={pin}
-              onChange={(e) => setPin(e.target.value.replace(/[^0-9]/g, ''))}
-              className="text-center text-3xl tracking-[1em] h-16 font-mono font-bold border-2 border-gray-200 focus-visible:ring-emerald-500 rounded-xl"
+              onChange={(e: React.ChangeEvent<HTMLInputElement>) => setPin(e.target.value.replace(/[^0-9]/g, ''))}
+              className="w-full text-center text-3xl tracking-[1em] h-16 font-mono font-bold border-2 border-gray-200 focus-visible:ring-emerald-500 rounded-xl"
             />
           </div>
 
@@ -87,13 +106,13 @@ export default function QrPortalPage({ params }: { params: Promise<{ qr_id: stri
             </div>
           )}
 
-          <Button 
+          <button 
             type="submit" 
-            className="w-full h-12 text-lg bg-emerald-600 hover:bg-emerald-700 text-white rounded-xl shadow-md transition-all active:scale-95"
+            className="w-full h-12 flex justify-center items-center text-lg bg-emerald-600 hover:bg-emerald-700 text-white rounded-xl shadow-md transition-all active:scale-95 disabled:opacity-50"
             disabled={loading || pin.length !== 4}
           >
             {loading ? <Loader2 className="w-6 h-6 animate-spin" /> : 'Ingresar'}
-          </Button>
+          </button>
         </form>
       </div>
     );
@@ -122,20 +141,33 @@ export default function QrPortalPage({ params }: { params: Promise<{ qr_id: stri
 
       <div className="space-y-4 flex-1">
         <h3 className="text-lg font-semibold text-gray-900 mb-3">Servicios y Novedades</h3>
-        
-        {/* En el futuro estos podrían listar servicios reales iterando sobre un array */}
-        <button className="w-full bg-white border border-gray-200 p-4 rounded-2xl flex items-center justify-between hover:border-emerald-300 hover:shadow-md transition-all group text-left">
-          <div className="flex items-center space-x-4">
-            <div className="w-12 h-12 bg-blue-50 rounded-full flex items-center justify-center group-hover:bg-blue-100 transition-colors">
-              <FileText className="w-6 h-6 text-blue-600" />
+        {/* Historial de últimos 2 trabajos */}
+        <div className="mb-6 space-y-3">
+          {loadingHistorial ? (
+            <div className="text-center p-4"><Loader2 className="w-5 h-5 animate-spin mx-auto text-emerald-500" /></div>
+          ) : historial.length === 0 ? (
+            <div className="bg-white border border-gray-100 p-4 rounded-xl text-center text-sm text-gray-500 shadow-sm">
+              No hay servicios registrados aún.
             </div>
-            <div>
-              <p className="font-semibold text-gray-900">Último Reporte</p>
-              <p className="text-sm text-gray-500">Ver detalles del servicio reciente</p>
-            </div>
-          </div>
-          <span className="text-blue-600 text-sm font-medium pr-2">Ver PDF</span>
-        </button>
+          ) : (
+            historial.map((trabajo: any) => (
+              <div key={trabajo.id} className="w-full bg-white border border-gray-200 p-4 rounded-2xl flex items-center justify-between hover:border-emerald-300 hover:shadow-md transition-all group text-left">
+                <div className="flex items-center space-x-4">
+                  <div className="w-12 h-12 bg-blue-50 rounded-full flex items-center justify-center group-hover:bg-blue-100 transition-colors">
+                    <FileText className="w-6 h-6 text-blue-600" />
+                  </div>
+                  <div>
+                    <p className="font-semibold text-gray-900">{trabajo.programacion?.cotizacion?.detalles?.descripcion || 'Trabajo de limpieza'}</p>
+                    <p className="text-sm text-gray-500">{new Date(trabajo.fechaFin || trabajo.createdAt).toLocaleDateString()}</p>
+                  </div>
+                </div>
+                {trabajo.evidenciaFotos && trabajo.evidenciaFotos.length > 0 && (
+                  <span className="text-blue-600 text-sm font-medium pr-2">Ver Evidencia</span>
+                )}
+              </div>
+            ))
+          )}
+        </div>
 
         <button className="w-full bg-white border border-gray-200 p-4 rounded-2xl flex items-center justify-between hover:border-amber-300 hover:shadow-md transition-all group text-left">
           <div className="flex items-center space-x-4">

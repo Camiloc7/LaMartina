@@ -1,10 +1,13 @@
 import { Router } from 'express';
-import { crear, getAll, getById, aprobarYProgramar } from './cotizaciones.controller';
+import { crear, getAll, getById, aprobarYProgramar, registrarPago, getResumenFinanciero } from './cotizaciones.controller';
 import { authenticate, authorize } from '../../middleware/authenticate';
 
 export const cotizacionesRouter: Router = Router();
 
 cotizacionesRouter.use(authenticate);
+
+// Resumen financiero (debe ir antes de /:id para no interferir)
+cotizacionesRouter.get('/finanzas/resumen', authorize('SUPER_ADMIN', 'ADMIN'), getResumenFinanciero);
 
 // Listar cotizaciones (accesible por ADMIN, SUPER_ADMIN)
 cotizacionesRouter.get('/', authorize('SUPER_ADMIN', 'ADMIN'), getAll);
@@ -17,3 +20,6 @@ cotizacionesRouter.post('/', authorize('SUPER_ADMIN'), crear);
 
 // Aprobar y programar servicio
 cotizacionesRouter.post('/:id/aprobar', authorize('SUPER_ADMIN', 'ADMIN'), aprobarYProgramar);
+
+// Registrar pago
+cotizacionesRouter.post('/:id/pago', authorize('SUPER_ADMIN', 'ADMIN'), registrarPago);

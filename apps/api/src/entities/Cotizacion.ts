@@ -46,6 +46,27 @@ export class Cotizacion {
   })
   estado!: CotizacionEstado;
 
+  // --- FINANCIAL TRACKING ---
+
+  @Column({ type: 'decimal', precision: 12, scale: 2, default: 0 })
+  montoPagado!: number;
+
+  @Column({
+    type: 'enum',
+    enum: ['PENDIENTE', 'PARCIAL', 'PAGADO'],
+    default: 'PENDIENTE',
+  })
+  estadoPago!: 'PENDIENTE' | 'PARCIAL' | 'PAGADO';
+
+  /**
+   * JSON Array to store payment history without needing a separate table.
+   * Format: { monto: number, fecha: string, notas: string }[]
+   */
+  @Column({ type: 'jsonb', default: [] })
+  historialPagos!: { monto: number; fecha: string; notas?: string }[];
+
+  // --------------------------
+
   @Column({ type: 'text', nullable: true })
   notasFinancieras?: string;
 

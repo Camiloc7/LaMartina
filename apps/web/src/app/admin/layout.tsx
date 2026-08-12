@@ -2,12 +2,13 @@
 
 import Link from 'next/link';
 import { usePathname, useRouter } from 'next/navigation';
-import { LayoutDashboard, MessageSquareWarning, CalendarClock, Users, LogOut, Menu, X, Building2, CalendarDays, ChevronLeft, ChevronRight } from 'lucide-react';
+import { LayoutDashboard, MessageSquareWarning, CalendarClock, Users, LogOut, Menu, X, Building2, CalendarDays, ChevronLeft, ChevronRight, DollarSign } from 'lucide-react';
 import { useState, useEffect } from 'react';
 import { fetchApi } from '@/lib/api';
 
 const sidebarLinks = [
   { name: 'Dashboard', href: '/admin/dashboard', icon: LayoutDashboard },
+  { name: 'Finanzas', href: '/admin/finanzas', icon: DollarSign },
   { name: 'Programación', href: '/admin/programacion', icon: CalendarDays },
   { name: 'PQRs', href: '/admin/pqr', icon: MessageSquareWarning },
   { name: 'Jornadas', href: '/admin/jornadas', icon: CalendarClock },

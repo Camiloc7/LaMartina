@@ -50,7 +50,7 @@ export const ServiciosService = {
 
   async completarOrdenTrabajo(
     ordenId: string,
-    data: { observaciones?: string; evidenciaFotos?: string[] }
+    data: { observaciones?: string; evidenciaFotos?: string[]; latitud?: number; longitud?: number }
   ): Promise<OrdenTrabajo> {
     const orden = await ordenTrabajoRepo.findOne({ 
       where: { id: ordenId },
@@ -61,6 +61,8 @@ export const ServiciosService = {
     orden.fechaFin = new Date();
     if (data.observaciones) orden.observaciones = data.observaciones;
     if (data.evidenciaFotos) orden.evidenciaFotos = data.evidenciaFotos;
+    if (data.latitud !== undefined) orden.latitud = data.latitud;
+    if (data.longitud !== undefined) orden.longitud = data.longitud;
     
     // Generar el PDF y subirlo a Cloudinary
     try {
