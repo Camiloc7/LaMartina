@@ -165,6 +165,14 @@ export default function PQRPage() {
     );
   };
 
+  const getCanalLabel = (canal: string | undefined) => {
+    switch (canal) {
+      case 'PORTAL_QR': return 'Portal QR';
+      case 'ADMINISTRACION': return 'Administración';
+      default: return 'Portal cliente';
+    }
+  };
+
   const filteredPqrs = pqrs.filter(pqr => 
     pqr.radicado?.toLowerCase().includes(searchTerm.toLowerCase()) ||
     pqr.titulo?.toLowerCase().includes(searchTerm.toLowerCase()) ||
@@ -262,6 +270,7 @@ export default function PQRPage() {
                   <th className="px-6 py-4">Radicado</th>
                   <th className="px-6 py-4">Asunto</th>
                   <th className="px-6 py-4">Conjunto</th>
+                  <th className="px-6 py-4">Canal y trazabilidad</th>
                   <th className="px-6 py-4">Asignación</th>
                   <th className="px-6 py-4">Estado</th>
                   <th className="px-6 py-4">Prioridad</th>
@@ -271,7 +280,7 @@ export default function PQRPage() {
               <tbody className="divide-y divide-slate-100">
                 {filteredPqrs.length === 0 ? (
                   <tr>
-                    <td colSpan={7} className="px-6 py-12 text-center text-slate-500">No hay PQRs que coincidan con la búsqueda.</td>
+                    <td colSpan={8} className="px-6 py-12 text-center text-slate-500">No hay PQRs que coincidan con la búsqueda.</td>
                   </tr>
                 ) : (
                   filteredPqrs.map((pqr) => (
@@ -284,6 +293,16 @@ export default function PQRPage() {
                         </div>
                       </td>
                       <td className="px-6 py-4 text-slate-600">{pqr.conjunto?.nombre || 'N/A'}</td>
+                      <td className="px-6 py-4">
+                        <div className="flex flex-col gap-1">
+                          <span className="text-xs font-semibold text-slate-700">{getCanalLabel(pqr.canalOrigen)}</span>
+                          {pqr.whatsappAbiertoAt ? (
+                            <span className="text-xs text-emerald-700">WhatsApp abierto · {new Date(pqr.whatsappAbiertoAt).toLocaleDateString()}</span>
+                          ) : pqr.canalOrigen === 'PORTAL_QR' ? (
+                            <span className="text-xs text-slate-400">Sin seguimiento por WhatsApp</span>
+                          ) : null}
+                        </div>
+                      </td>
                       
                       {/* Columna de Asignación */}
                       <td className="px-6 py-4">

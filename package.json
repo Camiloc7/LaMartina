@@ -7,10 +7,13 @@
     "test": "turbo run test",
     "lint": "turbo run lint",
     "format": "prettier --write \"**/*.{ts,tsx,md}\"",
-    "db:migrate": "pnpm --filter api typeorm migration:run",
-    "db:generate": "pnpm --filter api typeorm migration:generate"
+    "db:migrate": "pnpm --filter @lamartina/api typeorm migration:run",
+    "db:generate": "pnpm --filter @lamartina/api typeorm migration:generate",
+    "test:load:smoke": "artillery run tests/artillery/smoke.yml",
+    "test:load:staging": "artillery run -e staging tests/artillery/load-test.yml"
   },
   "devDependencies": {
+    "artillery": "^2.0.34",
     "turbo": "^2.3.3",
     "prettier": "^3.4.2",
     "typescript": "^5.7.3"

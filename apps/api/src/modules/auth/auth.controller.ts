@@ -4,6 +4,7 @@ import jwt from 'jsonwebtoken';
 import { AppDataSource } from '../../config/database';
 import { User } from '../../entities/User';
 import { ApiError } from '../../middleware/errorHandler';
+import { AuthRequest } from '../../middleware/authenticate';
 
 const userRepo = AppDataSource.getRepository(User);
 
@@ -53,7 +54,11 @@ export async function login(req: Request, res: Response): Promise<void> {
 }
 
 export async function logout(req: Request, res: Response): Promise<void> {
-  res.clearCookie('token');
+  res.clearCookie('token', {
+    httpOnly: true,
+    secure: process.env['NODE_ENV'] === 'production',
+    sameSite: 'lax',
+  });
   res.json({ success: true, message: 'Logged out successfully' });
 }
 
@@ -75,13 +80,16 @@ export async function register(req: Request, res: Response): Promise<void> {
 
   const hashedPassword = await bcrypt.hash(password, 12);
 
+  const requestedRole = rol as User['rol'] | undefined;
+  const canAssignRole = (req as Partial<AuthRequest>).userRol === 'SUPER_ADMIN';
+
   const user = userRepo.create({
     nombre,
     apellido,
     email,
     password: hashedPassword,
     telefono,
-    rol: (rol as User['rol']) ?? 'CLIENTE',
+    rol: canAssignRole && requestedRole ? requestedRole : 'CLIENTE',
   });
 
   await userRepo.save(user);

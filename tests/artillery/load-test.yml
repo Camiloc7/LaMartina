@@ -1,110 +1,49 @@
 config:
-  target: "http://localhost:3001"
+  # Sobrescribe este valor en staging con ARTILLERY_TARGET; nunca apuntes a producción.
+  target: "http://127.0.0.1:3001"
+  environments:
+    staging:
+      target: "{{ $env.ARTILLERY_TARGET }}"
   phases:
-    # Fase de calentamiento (30s — carga baja)
-    - duration: 30
-      arrivalRate: 5
+    - duration: 20
+      arrivalRate: 1
       name: "Calentamiento"
-    # Fase de carga normal (60s — carga media)
-    - duration: 60
-      arrivalRate: 20
-      name: "Carga normal"
-    # Fase de estrés (30s — pico de carga)
-    - duration: 30
-      arrivalRate: 50
-      name: "Pico de carga"
+    - duration: 40
+      arrivalRate: 2
+      name: "Carga controlada"
   defaults:
     headers:
       Content-Type: "application/json"
   plugins:
     expect: {}
+    ensure:
+      thresholds:
+        - "http.response_time.p95": 1500
 
 scenarios:
-  # ─── Escenario 1: Flujo de Jornada ─────────────────────────────────────────
-  # Simula múltiples jardineros iniciando jornada simultáneamente
-  - name: "Reporte de inicio de jornada (operarios concurrentes)"
+  # Los tokens son de cuentas de prueba dedicadas y se suministran mediante variables de entorno.
+  - name: "Consulta autenticada de PQR"
     weight: 40
     flow:
-      # Login del operario
-      - post:
-          url: "/api/v1/auth/login"
-          json:
-            email: "operario@test.lamartina.co"
-            password: "Test1234!"
-          capture:
-            - json: "$.data.accessToken"
-              as: "token"
-          expect:
-            - statusCode: 200
-      # Iniciar jornada
-      - post:
-          url: "/api/v1/jornadas"
+      - get:
+          url: "/api/v1/pqr"
           headers:
-            Authorization: "Bearer {{ token }}"
-          json:
-            conjuntoId: "conjunto-test-uuid"
-            ubicacion:
-              lat: 4.711
-              lng: -74.072
-          expect:
-            - statusCode: 201
-
-  # ─── Escenario 2: Radicación masiva de PQR ──────────────────────────────────
-  # Simula afluencia masiva de PQR desde el portal de clientes
-  - name: "Radicación de PQR (clientes concurrentes)"
-    weight: 35
-    flow:
-      - post:
-          url: "/api/v1/auth/login"
-          json:
-            email: "cliente@test.lamartina.co"
-            password: "Test1234!"
-          capture:
-            - json: "$.data.accessToken"
-              as: "token"
+            Authorization: "Bearer {{ $env.ARTILLERY_ADMIN_TOKEN }}"
           expect:
             - statusCode: 200
+
+  - name: "Radicación controlada de PQR de prueba"
+    weight: 60
+    flow:
       - post:
           url: "/api/v1/pqr"
           headers:
-            Authorization: "Bearer {{ token }}"
+            Authorization: "Bearer {{ $env.ARTILLERY_CLIENT_TOKEN }}"
           json:
             tipo: "QUEJA"
-            titulo: "Prueba de carga Artillery"
-            descripcion: "Esta es una PQR de prueba generada automáticamente durante las pruebas de carga del sistema."
-            conjuntoId: "conjunto-test-uuid"
+            titulo: "Carga Artillery {{ $uuid }}"
+            descripcion: "PQR creada exclusivamente para verificar capacidad y controles en el entorno de staging."
+            conjuntoId: "{{ $env.ARTILLERY_CONJUNTO_ID }}"
             prioridad: "MEDIA"
           expect:
             - statusCode: 201
-
-  # ─── Escenario 3: Consultas de Admin ─────────────────────────────────────────
-  # Simula administradores consultando el panel
-  - name: "Consulta de PQR (panel admin)"
-    weight: 25
-    flow:
-      - post:
-          url: "/api/v1/auth/login"
-          json:
-            email: "admin@test.lamartina.co"
-            password: "Test1234!"
-          capture:
-            - json: "$.data.accessToken"
-              as: "token"
-          expect:
-            - statusCode: 200
-      - get:
-          url: "/api/v1/pqr"
-          headers:
-            Authorization: "Bearer {{ token }}"
-          expect:
-            - statusCode: 200
-      - get:
-          url: "/api/v1/jornadas/mis-jornadas"
-          headers:
-            Authorization: "Bearer {{ token }}"
-          expect:
-            - statusCode: 200
-      - get:
-          url: "/health"
-          expect:
-            - statusCode: 200

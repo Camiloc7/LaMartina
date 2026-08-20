@@ -50,6 +50,7 @@ export function CloudinaryUploader({
   icon,
 }: CloudinaryUploaderProps) {
   const [isUploading, setIsUploading] = useState(false);
+  const isConfigured = Boolean(CLOUDINARY_CONFIG.cloudName && CLOUDINARY_CONFIG.uploadPreset);
 
   return (
     <CldUploadWidget
@@ -130,7 +131,7 @@ export function CloudinaryUploader({
         <button
           type="button"
           onClick={() => open()}
-          disabled={isUploading}
+          disabled={isUploading || !isConfigured}
           className={`
             inline-flex items-center gap-2 px-4 py-2 rounded-lg font-medium text-sm
             bg-brand-500 hover:bg-brand-600 text-white
@@ -140,7 +141,7 @@ export function CloudinaryUploader({
           `}
         >
           {icon && <span>{icon}</span>}
-          {isUploading ? 'Subiendo...' : label}
+          {isUploading ? 'Subiendo...' : isConfigured ? label : 'Carga no configurada'}
         </button>
       )}
     </CldUploadWidget>

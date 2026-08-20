@@ -6,7 +6,7 @@
 // Cloud name y upload preset son públicos (se pueden exponer en el cliente)
 export const CLOUDINARY_CONFIG = {
   cloudName: process.env.NEXT_PUBLIC_CLOUDINARY_CLOUD_NAME ?? '',
-  uploadPreset: process.env.NEXT_PUBLIC_CLOUDINARY_UPLOAD_PRESET ?? 'lamartina_unsigned',
+  uploadPreset: process.env.NEXT_PUBLIC_CLOUDINARY_UPLOAD_PRESET ?? '',
 } as const;
 
 // Validación en tiempo de ejecución

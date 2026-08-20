@@ -2,6 +2,7 @@ import multer from 'multer';
 import { CloudinaryStorage } from 'multer-storage-cloudinary';
 import { cloudinary } from '../config/cloudinary';
 import { CLOUDINARY_FOLDERS } from '@lamartina/shared';
+import { ApiError } from './errorHandler';
 
 // ─── Helpers para crear storage de Cloudinary ─────────────────────────────────
 
@@ -14,6 +15,16 @@ function createCloudinaryStorage(folder: string, allowedFormats: string[]) {
       transformation: [{ quality: 'auto:good' }, { fetch_format: 'auto' }],
     } as object,
   });
+}
+
+function fileFilter(allowedMimeTypes: string[]) {
+  return (_req: Express.Request, file: Express.Multer.File, callback: multer.FileFilterCallback): void => {
+    if (!allowedMimeTypes.includes(file.mimetype)) {
+      callback(new ApiError('Tipo de archivo no permitido.', 400));
+      return;
+    }
+    callback(null, true);
+  };
 }
 
 // ─── Configuraciones por módulo ───────────────────────────────────────────────
@@ -31,6 +42,7 @@ export const uploadProfilePicture: RequestHandler = multer({
     'png',
     'webp',
   ]),
+  fileFilter: fileFilter(['image/jpeg', 'image/png', 'image/webp']),
   limits: { fileSize: 5 * 1024 * 1024 }, // 5MB máximo
 }).single('avatar');
 
@@ -46,6 +58,7 @@ export const uploadJornadaEvidencia: RequestHandler = multer({
     'webp',
     'heic',
   ]),
+  fileFilter: fileFilter(['image/jpeg', 'image/png', 'image/webp', 'image/heic', 'image/heif']),
   limits: { fileSize: 10 * 1024 * 1024 }, // 10MB — fotos de alta calidad
 }).array('evidencias', 10); // Máximo 10 fotos por jornada
 
@@ -61,6 +74,7 @@ export const uploadPQRAdjunto: RequestHandler = multer({
     'pdf',
     'webp',
   ]),
+  fileFilter: fileFilter(['image/jpeg', 'image/png', 'image/webp', 'application/pdf']),
   limits: { fileSize: 15 * 1024 * 1024 }, // 15MB — incluye PDFs
 }).array('adjuntos', 5); // Máximo 5 adjuntos por PQR
 
@@ -74,6 +88,7 @@ export const uploadConjuntoImagen: RequestHandler = multer({
     'png',
     'webp',
   ]),
+  fileFilter: fileFilter(['image/jpeg', 'image/png', 'image/webp']),
   limits: { fileSize: 10 * 1024 * 1024 },
 }).array('imagenes', 20); // Múltiples imágenes de instalaciones
 

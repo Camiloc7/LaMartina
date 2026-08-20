@@ -46,3 +46,15 @@ export function authorize(...roles: string[]) {
     next();
   };
 }
+
+export function authorizeSelfOrRoles(paramName: string, ...roles: string[]) {
+  return (req: Request, _res: Response, next: NextFunction): void => {
+    const authReq = req as AuthRequest;
+    const resourceUserId = req.params[paramName];
+
+    if (authReq.userId !== resourceUserId && !roles.includes(authReq.userRol)) {
+      throw new ApiError('No tienes permisos para acceder a este recurso.', 403);
+    }
+    next();
+  };
+}

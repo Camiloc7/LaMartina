@@ -15,6 +15,7 @@ import { Propiedad } from './Propiedad';
 export type PQRTipo = 'PETICION' | 'QUEJA' | 'RECLAMO' | 'FELICITACION';
 export type PQREstado = 'ABIERTA' | 'EN_PROCESO' | 'RESUELTA' | 'CERRADA';
 export type PQRPrioridad = 'BAJA' | 'MEDIA' | 'ALTA' | 'URGENTE';
+export type PQRCanalOrigen = 'PORTAL_QR' | 'PORTAL_CLIENTE' | 'ADMINISTRACION';
 
 @Entity('pqrs')
 export class PQR {
@@ -67,8 +68,8 @@ export class PQR {
   @JoinColumn({ name: 'cliente_id' })
   cliente?: User;
 
-  @Column({ name: 'cliente_id' })
-  clienteId!: string;
+  @Column({ name: 'cliente_id', nullable: true })
+  clienteId?: string;
 
   @ManyToOne(() => Conjunto, (conjunto) => conjunto.pqrs)
   @JoinColumn({ name: 'conjunto_id' })
@@ -96,6 +97,14 @@ export class PQR {
 
   @Column({ nullable: true, type: 'timestamptz' })
   fechaLimite?: Date;
+
+  /** Canal desde el cual se creó el caso, para trazabilidad operativa. */
+  @Column({ name: 'canal_origen', length: 30, default: 'PORTAL_CLIENTE' })
+  canalOrigen!: PQRCanalOrigen;
+
+  /** Primer momento en que el usuario abrió el seguimiento por WhatsApp. */
+  @Column({ name: 'whatsapp_abierto_at', nullable: true, type: 'timestamptz' })
+  whatsappAbiertoAt?: Date;
 
   @BeforeInsert()
   generateRadicado() {

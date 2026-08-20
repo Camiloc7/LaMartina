@@ -13,36 +13,31 @@ class SocketService {
       },
     });
 
-    // Autenticación básica de sockets (opcional pero recomendada para canales seguros)
     this.io.use((socket, next) => {
-      // Extraemos el token ya sea del auth payload o de las cookies
       const token = socket.handshake.auth.token || socket.handshake.headers.cookie?.split('token=')[1]?.split(';')[0];
       
       if (!token) {
-        // Permitimos la conexión de todas formas (quizás para vistas públicas) pero sin identificar usuario
-        return next();
+        return next(new Error('No autenticado'));
       }
 
       try {
-        const decoded = jwt.verify(token, process.env['JWT_SECRET'] ?? 'dev_secret') as any;
-        socket.data.user = decoded; // { id, rol, conjuntoId }
+        const jwtSecret = process.env['JWT_SECRET'];
+        if (!jwtSecret) return next(new Error('Configuración de autenticación incompleta'));
+        const decoded = jwt.verify(token, jwtSecret) as { sub: string; rol: string; conjuntoId?: string };
+        socket.data.user = decoded;
         next();
-      } catch (err) {
-        // En caso de error de token, procedemos pero como invitado
-        next();
+      } catch {
+        next(new Error('Token inválido'));
       }
     });
 
     this.io.on('connection', (socket: Socket) => {
-      console.log(`🔌 Cliente conectado: ${socket.id} (User: ${socket.data.user?.rol || 'Invitado'})`);
+      console.log(`🔌 Cliente conectado: ${socket.id} (Rol: ${socket.data.user.rol})`);
 
-      // Unimos al usuario a una sala (room) si queremos mandar notificaciones por conjunto o rol
-      if (socket.data.user) {
-        const { id, rol, conjuntoId } = socket.data.user;
-        socket.join(`rol_${rol}`); // Ej: rol_ADMIN
-        if (conjuntoId) {
-          socket.join(`conjunto_${conjuntoId}`);
-        }
+      const { rol, conjuntoId } = socket.data.user;
+      socket.join(`rol_${rol}`);
+      if (conjuntoId) {
+        socket.join(`conjunto_${conjuntoId}`);
       }
 
       socket.on('disconnect', () => {
@@ -70,6 +65,12 @@ class SocketService {
    */
   public emitToRol(rol: string, event: string, data: any): void {
     this.getIo().to(`rol_${rol}`).emit(event, data);
+  }
+
+  public emitToRoles(roles: string[], event: string, data: unknown): void {
+    for (const rol of roles) {
+      this.getIo().to(`rol_${rol}`).emit(event, data);
+    }
   }
   
   /**

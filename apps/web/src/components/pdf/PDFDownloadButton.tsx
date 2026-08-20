@@ -1,15 +1,9 @@
 'use client';
 
 import React, { useState, useEffect } from 'react';
-import dynamic from 'next/dynamic';
+import { PDFDownloadLink } from '@react-pdf/renderer';
 import { Download, Loader2 } from 'lucide-react';
 import { ReporteServicioPDF } from './ReporteServicioPDF';
-
-// Envolvemos el renderizador de PDF en dynamic para evitar problemas SSR en Next.js
-const PDFDownloadLink = dynamic(
-  () => import('@react-pdf/renderer').then(mod => mod.PDFDownloadLink),
-  { ssr: false, loading: () => <button disabled className="btn-loading"><Loader2 className="animate-spin w-5 h-5 inline mr-2"/>Preparando PDF...</button> }
-);
 
 interface PDFButtonProps {
   trabajo: any;

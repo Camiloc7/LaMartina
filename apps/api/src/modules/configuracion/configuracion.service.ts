@@ -11,7 +11,7 @@ export const ConfiguracionService = {
     const config = await configuracionRepo.find();
     
     if (config.length > 0) {
-      return config[0];
+      return config[0]!;
     }
     
     // Si no hay configuración, la creamos

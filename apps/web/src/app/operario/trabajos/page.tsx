@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from 'react';
 import { fetchApi } from '@/lib/api';
-import { Loader2, MapPin, Camera, CheckCircle, Navigation, X } from 'lucide-react';
+import { Loader2, MapPin, Camera, CheckCircle, Navigation, X, Wrench } from 'lucide-react';
 
 export default function OperarioTrabajosPage() {
   const [programaciones, setProgramaciones] = useState<any[]>([]);

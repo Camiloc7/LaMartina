@@ -45,7 +45,7 @@ export default function UsuariosPage() {
     setError('');
 
     try {
-      const response = await fetchApi('/auth/register', {
+      const response = await fetchApi('/auth/register/staff', {
         method: 'POST',
         body: JSON.stringify({ nombre, apellido, email, password, telefono, rol }),
       });

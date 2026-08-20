@@ -13,6 +13,7 @@ export async function fetchApi<T = any>(
     ...options,
     headers,
     credentials: 'include', // Important to send cookies
+    signal: options.signal ?? AbortSignal.timeout(15_000),
   });
 
   const data = await res.json();

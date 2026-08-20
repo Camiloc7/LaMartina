@@ -1,15 +1,10 @@
 'use client';
 
 import React, { useState, useEffect } from 'react';
-import dynamic from 'next/dynamic';
+import { PDFDownloadLink } from '@react-pdf/renderer';
 import { Download, Loader2, FileText, FileSpreadsheet } from 'lucide-react';
 import { CotizacionPDF } from './CotizacionPDF';
 import { CuentaCobroPDF } from './CuentaCobroPDF';
-
-const PDFDownloadLink = dynamic(
-  () => import('@react-pdf/renderer').then(mod => mod.PDFDownloadLink),
-  { ssr: false, loading: () => <button disabled className="px-2 py-1 bg-slate-100 text-slate-400 rounded-md text-xs"><Loader2 className="w-3 h-3 animate-spin inline mr-1"/>Cargando...</button> }
-);
 
 interface FinancePDFProps {
   cotizacion: any;

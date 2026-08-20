@@ -38,6 +38,9 @@ export async function iniciarJornada(
   if (req.body.jornadaId) {
     const programada = await jornadaRepo.findOne({ where: { id: req.body.jornadaId } });
     if (programada && programada.estado === 'PROGRAMADA') {
+      if (programada.operarioId !== operarioId) {
+        throw new ApiError('No tienes permiso para iniciar esta jornada.', 403);
+      }
       programada.estado = 'EN_PROGRESO';
       programada.fechaInicio = new Date();
       programada.ubicacionInicio = ubicacion;
@@ -94,6 +97,9 @@ export async function finalizarJornada(
 
   const jornada = await jornadaRepo.findOne({ where: { id } });
   if (!jornada) throw new ApiError('Jornada no encontrada', 404);
+  if (jornada.operarioId !== (req as AuthRequest).userId) {
+    throw new ApiError('No tienes permiso para finalizar esta jornada.', 403);
+  }
   if (jornada.estado !== 'EN_PROGRESO') {
     throw new ApiError('Esta jornada ya fue finalizada o cancelada.', 400);
   }
@@ -125,6 +131,9 @@ export async function agregarEvidencias(
 
   const jornada = await jornadaRepo.findOne({ where: { id } });
   if (!jornada) throw new ApiError('Jornada no encontrada', 404);
+  if (jornada.operarioId !== (req as AuthRequest).userId) {
+    throw new ApiError('No tienes permiso para adjuntar evidencias a esta jornada.', 403);
+  }
 
   // Extraer las URLs de Cloudinary de los archivos subidos
   const nuevasUrls = files.map((f) => f.path);
@@ -162,6 +171,10 @@ export async function getById(req: Request, res: Response): Promise<void> {
     relations: ['operario', 'conjunto'],
   });
   if (!jornada) throw new ApiError('Jornada no encontrada', 404);
+  const authReq = req as AuthRequest;
+  if (authReq.userRol === 'OPERARIO' && jornada.operarioId !== authReq.userId) {
+    throw new ApiError('No tienes permiso para ver esta jornada.', 403);
+  }
   res.json({ success: true, data: jornada });
 }
 

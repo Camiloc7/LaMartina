@@ -11,6 +11,7 @@ import { createServer } from 'http';
 
 import { AppDataSource } from './config/database';
 import { errorHandler } from './middleware/errorHandler';
+import { apiRateLimit } from './middleware/rateLimit';
 import { socketService } from './services/socket.service';
 
 // Rutas de módulos
@@ -29,6 +30,10 @@ dotenv.config({ path: path.resolve(process.cwd(), '../../.env') });
 const app: Express = express();
 const PORT = process.env['API_PORT'] ?? 3001;
 
+if (process.env['TRUST_PROXY'] === 'true') {
+  app.set('trust proxy', 1);
+}
+
 // ─── Middleware Global ────────────────────────────────────────────────────────
 
 app.use(helmet());
@@ -44,6 +49,7 @@ app.use(morgan('combined'));
 app.use(express.json({ limit: '10mb' }));
 app.use(express.urlencoded({ extended: true }));
 app.use(cookieParser());
+app.use('/api', apiRateLimit);
 
 // ─── Rutas ────────────────────────────────────────────────────────────────────
 
@@ -67,7 +73,7 @@ app.use(errorHandler);
 
 // ─── Inicialización ───────────────────────────────────────────────────────────
 
-async function bootstrap() {
+export async function bootstrap(): Promise<void> {
   try {
     await AppDataSource.initialize();
     console.log('✅ Conexión a PostgreSQL establecida');
@@ -86,6 +92,8 @@ async function bootstrap() {
   }
 }
 
-bootstrap();
+if (require.main === module) {
+  void bootstrap();
+}
 
 export default app;

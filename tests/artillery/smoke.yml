@@ -1,0 +1,23 @@
+config:
+  target: "http://127.0.0.1:3001"
+  phases:
+    - duration: 15
+      arrivalRate: 1
+      name: "Smoke seguro"
+  plugins:
+    expect: {}
+    ensure:
+      thresholds:
+        - "http.response_time.p95": 1000
+
+scenarios:
+  - name: "Disponibilidad y rutas protegidas"
+    flow:
+      - get:
+          url: "/health"
+          expect:
+            - statusCode: 200
+      - get:
+          url: "/api/v1/pqr/mis-pqr"
+          expect:
+            - statusCode: 401

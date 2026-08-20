@@ -5,6 +5,7 @@ import { Lock, Home, FileText, MessageSquare, AlertCircle, Loader2 } from 'lucid
 import Image from 'next/image';
 import ContactFooter from '@/components/ContactFooter';
 import { PDFDownloadButton } from '@/components/pdf/PDFDownloadButton';
+import { PqrRadicationModal } from '@/components/pqr/PqrRadicationModal';
 
 export default function QrPortalPage({ params }: { params: Promise<{ qr_id: string }> }) {
   // En Next.js 15, params es una Promesa.
@@ -21,6 +22,7 @@ export default function QrPortalPage({ params }: { params: Promise<{ qr_id: stri
 
   const [isContactModalOpen, setIsContactModalOpen] = useState(false);
   const [contactModalType, setContactModalType] = useState<'pqr' | 'service'>('pqr');
+  const [isPqrModalOpen, setIsPqrModalOpen] = useState(false);
 
   const handleAuth = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -200,7 +202,7 @@ export default function QrPortalPage({ params }: { params: Promise<{ qr_id: stri
         </div>
 
         <button 
-          onClick={() => { setContactModalType('pqr'); setIsContactModalOpen(true); }}
+          onClick={() => setIsPqrModalOpen(true)}
           className="w-full bg-white border border-gray-200 p-4 rounded-2xl flex items-center justify-between hover:border-brand-300 hover:shadow-md transition-all group text-left"
         >
           <div className="flex items-center space-x-4">
@@ -268,6 +270,14 @@ export default function QrPortalPage({ params }: { params: Promise<{ qr_id: stri
             </button>
           </div>
         </div>
+      )}
+
+      {isPqrModalOpen && propiedad && (
+        <PqrRadicationModal
+          propiedad={propiedad}
+          whatsappNumber={config?.telefonoContacto}
+          onClose={() => setIsPqrModalOpen(false)}
+        />
       )}
     </div>
   );

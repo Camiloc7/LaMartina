@@ -1,11 +1,30 @@
 import { Request, Response } from 'express';
 import { AppDataSource } from '../../config/database';
 import { PQR } from '../../entities/PQR';
+import { Propiedad } from '../../entities/Propiedad';
 import { ApiError } from '../../middleware/errorHandler';
 import { AuthRequest } from '../../middleware/authenticate';
 import { socketService } from '../../services/socket.service';
 
 const pqrRepo = AppDataSource.getRepository(PQR);
+const propiedadRepo = AppDataSource.getRepository(Propiedad);
+
+function canAccessPqr(pqr: PQR, req: AuthRequest): boolean {
+  if (['ADMIN', 'SUPER_ADMIN'].includes(req.userRol)) return true;
+  if (req.userRol === 'OPERARIO') return pqr.asignadoAId === req.userId;
+  return pqr.clienteId === req.userId;
+}
+
+function notifyAdmins(pqr: PQR): void {
+  socketService.emitToRoles(['ADMIN', 'SUPER_ADMIN'], 'nueva_pqr', {
+    id: pqr.id,
+    radicado: pqr.radicado,
+    titulo: pqr.titulo,
+    prioridad: pqr.prioridad,
+    conjuntoId: pqr.conjuntoId,
+    createdAt: pqr.createdAt,
+  });
+}
 
 export async function crearPQR(req: Request, res: Response): Promise<void> {
   let clienteId = (req as AuthRequest).userId;
@@ -32,12 +51,12 @@ export async function crearPQR(req: Request, res: Response): Promise<void> {
     clienteId,
     prioridad: prioridad ?? 'MEDIA',
     estado: 'ABIERTA',
+    canalOrigen: ['ADMIN', 'SUPER_ADMIN'].includes(userRol) ? 'ADMINISTRACION' : 'PORTAL_CLIENTE',
   });
 
   await pqrRepo.save(pqr);
 
-  // Emitir evento por WebSockets
-  socketService.emitToAll('nueva_pqr', pqr);
+  notifyAdmins(pqr);
 
   res.status(201).json({
     success: true,
@@ -47,14 +66,20 @@ export async function crearPQR(req: Request, res: Response): Promise<void> {
 }
 
 export async function crearPQRPublica(req: Request, res: Response): Promise<void> {
-  const { tipo, titulo, descripcion, conjuntoId, propiedadId, prioridad } = req.body as {
+  const { tipo, titulo, descripcion, conjuntoId, propiedadId } = req.body as {
     tipo: PQR['tipo'];
     titulo: string;
     descripcion: string;
     conjuntoId: string;
     propiedadId: string;
-    prioridad?: PQR['prioridad'];
   };
+
+  const propiedad = await propiedadRepo.findOne({
+    where: { id: propiedadId, conjuntoId, activo: true },
+  });
+  if (!propiedad) {
+    throw new ApiError('La propiedad no corresponde a un conjunto activo.', 400);
+  }
 
   const pqr = pqrRepo.create({
     tipo,
@@ -62,20 +87,40 @@ export async function crearPQRPublica(req: Request, res: Response): Promise<void
     descripcion,
     conjuntoId,
     propiedadId,
-    prioridad: prioridad ?? 'MEDIA',
+    prioridad: 'MEDIA',
     estado: 'ABIERTA',
+    canalOrigen: 'PORTAL_QR',
     // clienteId remains null/undefined since it's an anonymous QR submission
   });
 
   await pqrRepo.save(pqr);
 
-  // Emitir evento por WebSockets
-  socketService.emitToAll('nueva_pqr', pqr);
+  notifyAdmins(pqr);
 
   res.status(201).json({
     success: true,
     message: `PQR radicada exitosamente. Número de radicado: ${pqr.radicado}`,
     data: pqr,
+  });
+}
+
+/** Registra que el radicante abrió WhatsApp como seguimiento del caso ya creado. */
+export async function registrarWhatsappPublico(req: Request, res: Response): Promise<void> {
+  const { id } = req.params as { id: string };
+  const pqr = await pqrRepo.findOne({ where: { id } });
+
+  if (!pqr || pqr.canalOrigen !== 'PORTAL_QR') {
+    throw new ApiError('PQR no encontrada', 404);
+  }
+
+  if (!pqr.whatsappAbiertoAt) {
+    pqr.whatsappAbiertoAt = new Date();
+    await pqrRepo.save(pqr);
+  }
+
+  res.json({
+    success: true,
+    data: { id: pqr.id, radicado: pqr.radicado, whatsappAbiertoAt: pqr.whatsappAbiertoAt },
   });
 }
 
@@ -97,6 +142,10 @@ export async function agregarAdjuntos(
 
   const pqr = await pqrRepo.findOne({ where: { id } });
   if (!pqr) throw new ApiError('PQR no encontrada', 404);
+
+  if (!canAccessPqr(pqr, req as AuthRequest)) {
+    throw new ApiError('No tienes permiso para adjuntar archivos a esta PQR.', 403);
+  }
 
   if (pqr.estado === 'CERRADA') {
     throw new ApiError('No se pueden agregar adjuntos a una PQR cerrada.', 400);
@@ -129,7 +178,7 @@ export async function getMisPQR(req: Request, res: Response): Promise<void> {
 
 export async function getAll(_req: Request, res: Response): Promise<void> {
   const pqrs = await pqrRepo.find({
-    relations: ['cliente', 'conjunto'],
+    relations: ['cliente', 'conjunto', 'propiedad', 'asignadoA'],
     order: { createdAt: 'DESC' },
   });
   res.json({ success: true, data: pqrs });
@@ -171,6 +220,10 @@ export async function asignarOperario(req: Request, res: Response): Promise<void
   const pqr = await pqrRepo.findOne({ where: { id } });
   if (!pqr) throw new ApiError('PQR no encontrada', 404);
 
+  if (pqr.asignadoAId && pqr.asignadoAId !== operarioId) {
+    throw new ApiError('La PQR ya está asignada a otro operario.', 409);
+  }
+
   pqr.asignadoAId = operarioId;
   pqr.estado = 'EN_PROCESO';
 
@@ -186,8 +239,7 @@ export async function actualizarEstado(req: Request, res: Response): Promise<voi
   const pqr = await pqrRepo.findOne({ where: { id } });
   if (!pqr) throw new ApiError('PQR no encontrada', 404);
   
-  // Opcional: Validar que el operario asignado sea el que actualiza (o admin)
-  if (pqr.asignadoAId && pqr.asignadoAId !== operarioId && (req as AuthRequest).userRol === 'OPERARIO') {
+  if ((req as AuthRequest).userRol === 'OPERARIO' && pqr.asignadoAId !== operarioId) {
     throw new ApiError('No tienes permiso para actualizar esta PQR', 403);
   }
 

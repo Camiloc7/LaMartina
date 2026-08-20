@@ -42,7 +42,7 @@ export const getAll = async (req: Request, res: Response) => {
 };
 
 export const getById = async (req: Request, res: Response) => {
-  const { id } = req.params;
+  const id = req.params['id'] as string;
   const propiedad = await PropiedadesService.obtenerPorId(id);
   if (!propiedad) {
     return res.status(404).json({ success: false, error: 'Propiedad no encontrada' });
@@ -51,7 +51,7 @@ export const getById = async (req: Request, res: Response) => {
 };
 
 export const update = async (req: Request, res: Response) => {
-  const { id } = req.params;
+  const id = req.params['id'] as string;
   const { numero, extension, complejidad } = req.body;
   
   const propiedad = await PropiedadesService.actualizar(id, { numero, extension, complejidad });
@@ -77,13 +77,13 @@ export const updateMasivo = async (req: Request, res: Response) => {
 };
 
 export const desactivar = async (req: Request, res: Response) => {
-  const { id } = req.params;
+  const id = req.params['id'] as string;
   await PropiedadesService.desactivar(id);
   res.json({ success: true, data: null, message: 'Propiedad eliminada logicamente' });
 };
 
 export const getHistorial = async (req: Request, res: Response) => {
-  const { id } = req.params;
+  const id = req.params['id'] as string;
   const { limit } = req.query;
   const numLimit = limit ? parseInt(limit as string, 10) : undefined;
   const historial = await PropiedadesService.obtenerHistorial(id, numLimit);

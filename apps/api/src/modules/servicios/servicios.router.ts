@@ -6,19 +6,21 @@ import {
   completar,
 } from './servicios.controller';
 import { authenticate, authorize } from '../../middleware/authenticate';
+import { uuidParamValidation, validate } from '../../middleware/validation';
 
 export const serviciosRouter: Router = Router();
 
 serviciosRouter.use(authenticate);
 
 // Programaciones
-serviciosRouter.get('/programaciones', getAllProgramaciones);
-serviciosRouter.get('/programaciones/:id', getProgramacionById);
+serviciosRouter.get('/programaciones', authorize('SUPER_ADMIN', 'ADMIN', 'OPERARIO'), getAllProgramaciones);
+serviciosRouter.get('/programaciones/:id', authorize('SUPER_ADMIN', 'ADMIN', 'OPERARIO'), ...validate(uuidParamValidation()), getProgramacionById);
 
 // Iniciar orden de trabajo desde una programación
 serviciosRouter.post(
   '/programaciones/:id/iniciar',
   authorize('SUPER_ADMIN', 'ADMIN', 'OPERARIO'),
+  ...validate(uuidParamValidation()),
   iniciar
 );
 
@@ -26,5 +28,6 @@ serviciosRouter.post(
 serviciosRouter.post(
   '/orden-trabajo/:id/completar',
   authorize('SUPER_ADMIN', 'ADMIN', 'OPERARIO'),
+  ...validate(uuidParamValidation()),
   completar
 );
